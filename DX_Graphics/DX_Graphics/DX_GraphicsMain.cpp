@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "DX_GraphicsMain.h"
 #include "Common\DirectXHelper.h"
+#include <Windows.h>
 
 using namespace DX_Graphics;
 using namespace Windows::Foundation;
@@ -23,7 +24,7 @@ DX_GraphicsMain::DX_GraphicsMain(const std::shared_ptr<DX::DeviceResources>& dev
 	// e.g. for 60 FPS fixed timestep update logic, call:
 	/*
 	m_timer.SetFixedTimeStep(true);
-	m_timer.SetTargetElapsedSeconds(1.0 / 60);
+	m_timer.SetTargetElapsedSeconds(1.0 / 30);
 	*/
 }
 
@@ -39,10 +40,17 @@ void DX_GraphicsMain::CreateWindowSizeDependentResources()
 	// TODO: Replace this with the size-dependent initialization of your app's content.
 	m_sceneRenderer->CreateWindowSizeDependentResources();
 }
-
+using namespace Windows::UI::Core;
+extern CoreWindow^ gwindow;
 // Updates the application state once per frame.
 void DX_GraphicsMain::Update() 
 {
+	/*if (Windows::UI::Core::CoreVirtualKeyStates::Down == gwindow->GetAsyncKeyState(Windows::System::VirtualKey::Space))
+	{
+		Windows::UI::Input::PointerPoint^ point = Windows::UI::Input::PointerPoint::GetCurrentPoint(1);
+		float X = point->Position.X;
+		float Y = point->Position.Y;
+	}*/
 	// Update scene objects.
 	m_timer.Tick([&]()
 	{

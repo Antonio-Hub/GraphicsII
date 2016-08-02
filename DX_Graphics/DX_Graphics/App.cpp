@@ -15,6 +15,8 @@ using namespace Windows::System;
 using namespace Windows::Foundation;
 using namespace Windows::Graphics::Display;
 
+//CoreWindow^ gwindow = nullptr;
+
 // The main function is only used to initialize our IFrameworkView class.
 [Platform::MTAThread]
 int main(Platform::Array<Platform::String^>^)
@@ -77,6 +79,18 @@ void App::SetWindow(CoreWindow^ window)
 	DisplayInformation::DisplayContentsInvalidated +=
 		ref new TypedEventHandler<DisplayInformation^, Object^>(this, &App::OnDisplayContentsInvalidated);
 
+	window->PointerPressed += 
+		ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow ^, Windows::UI::Core::PointerEventArgs ^>(this, &DX_Graphics::App::OnPointerPressed);
+	window->PointerReleased += 
+		ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow ^, Windows::UI::Core::PointerEventArgs ^>(this, &DX_Graphics::App::OnPointerReleased);
+	window->PointerMoved += 
+		ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow ^, Windows::UI::Core::PointerEventArgs ^>(this, &DX_Graphics::App::OnPointerMoved);
+	window->PointerExited += 
+		ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow ^, Windows::UI::Core::PointerEventArgs ^>(this, &DX_Graphics::App::OnPointerExited);
+	window->KeyDown += 
+		ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow ^, Windows::UI::Core::KeyEventArgs ^>(this, &DX_Graphics::App::OnKeyDown);
+	window->KeyUp += 
+		ref new Windows::Foundation::TypedEventHandler<Windows::UI::Core::CoreWindow ^, Windows::UI::Core::KeyEventArgs ^>(this, &DX_Graphics::App::OnKeyUp);
 	m_deviceResources->SetWindow(window);
 }
 
@@ -193,4 +207,81 @@ void App::OnOrientationChanged(DisplayInformation^ sender, Object^ args)
 void App::OnDisplayContentsInvalidated(DisplayInformation^ sender, Object^ args)
 {
 	m_deviceResources->ValidateDevice();
+}
+
+bool mouse_move = false;
+float diffx = 0;
+float diffy = 0;
+bool left_click = false;
+
+void DX_Graphics::App::OnPointerPressed(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
+{
+	diffx = 0;
+	diffy = 0;
+	left_click = true;
+	mouse_move = true;
+}
+
+
+void DX_Graphics::App::OnPointerReleased(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
+{
+	diffx = 0;
+	diffy = 0;
+	left_click = false;
+	mouse_move = false;
+}
+
+
+void DX_Graphics::App::OnPointerMoved(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
+{
+	mouse_move = true;
+	float X = args->CurrentPoint->Position.X;
+	float Y = args->CurrentPoint->Position.Y;
+	static float prevX = X;
+	static float prevY = Y;
+	diffx = X - prevX;
+	diffy = Y - prevY;
+	prevX = X;
+	prevY = Y;
+}
+
+
+void DX_Graphics::App::OnPointerExited(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
+{
+	diffx = 0;
+	diffy = 0;
+	left_click = false;
+	mouse_move = false;
+}
+
+//bool w_down = false;
+//bool a_down = false;
+//bool s_down = false;
+//bool d_down = false;
+char buttons[256] = {};
+void DX_Graphics::App::OnKeyDown(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::KeyEventArgs ^args)
+{
+	buttons[(unsigned int)args->VirtualKey] = true;
+	//if (args->VirtualKey == Windows::System::VirtualKey::W)
+	//	w_down = true;
+	//if (args->VirtualKey == Windows::System::VirtualKey::A)
+	//	a_down = true;
+	//if (args->VirtualKey == Windows::System::VirtualKey::S)
+	//	s_down = true;
+	//if (args->VirtualKey == Windows::System::VirtualKey::D)
+	//	d_down = true;
+}
+
+
+void DX_Graphics::App::OnKeyUp(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::KeyEventArgs ^args)
+{
+	buttons[(unsigned int)args->VirtualKey] = false;
+	//if (args->VirtualKey == Windows::System::VirtualKey::W)
+	//	w_down = false;
+	//if (args->VirtualKey == Windows::System::VirtualKey::A)
+	//	a_down = false;
+	//if (args->VirtualKey == Windows::System::VirtualKey::S)
+	//	s_down = false;
+	//if (args->VirtualKey == Windows::System::VirtualKey::D)
+	//	d_down = false;
 }

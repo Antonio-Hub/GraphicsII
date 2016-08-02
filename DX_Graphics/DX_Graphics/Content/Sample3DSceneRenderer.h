@@ -4,6 +4,9 @@
 #include "ShaderStructures.h"
 #include "..\Common\StepTimer.h"
 
+#include <DirectXMath.h>
+using namespace DirectX;
+
 namespace DX_Graphics
 {
 	// This sample renderer instantiates a basic rendering pipeline.
@@ -45,6 +48,9 @@ namespace DX_Graphics
 		bool	m_loadingComplete;
 		float	m_degreesPerSecond;
 		bool	m_tracking;
+
+		XMFLOAT4X4 world, camera, proj;
+
 	};
 }
 

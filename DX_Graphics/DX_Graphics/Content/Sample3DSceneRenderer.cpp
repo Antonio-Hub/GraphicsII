@@ -18,6 +18,11 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 {
 	CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
+	static const XMVECTORF32 eye = { 0.0f, 0.0f, -1.5f, 0.0f };
+	static const XMVECTORF32 at = { 0.0f, 0.0f, 0.0f, 0.0f };
+	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
+	XMStoreFloat4x4(&camera, XMMatrixLookAtRH(eye, at, up));
+	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtRH(eye, at, up))));
 }
 
 // Initializes view parameters when the window size changes.
@@ -65,6 +70,20 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixLookAtRH(eye, at, up)));
 }
 
+using namespace Windows::UI::Core;
+extern CoreWindow^ gwindow;
+#include <atomic>
+extern bool mouse_move;
+extern bool left_click;
+extern float diffx;
+extern float diffy;
+extern char buttons[256];
+
+//extern bool w_down;
+//extern bool a_down;
+//extern bool s_down;
+//extern bool d_down;
+
 // Called once per frame, rotates the cube and calculates the model and view matrices.
 void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 {
@@ -77,6 +96,42 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 
 		Rotate(radians);
 	}
+	//XMMATRIX newcamera = camera;
+	XMMATRIX newcamera = XMLoadFloat4x4(&camera);
+
+	if (buttons['W'])
+	{
+		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * -timer.GetElapsedSeconds() * 5.0;
+	}
+
+	if (buttons['A'])
+	{
+		newcamera.r[3] = newcamera.r[3] + newcamera.r[0] * -timer.GetElapsedSeconds() *5.0;
+	}
+
+	if (buttons['S'])
+	{
+		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * timer.GetElapsedSeconds() * 5.0;
+	}
+
+	if (buttons['D'])
+	{
+		newcamera.r[3] = newcamera.r[3] + newcamera.r[0] * timer.GetElapsedSeconds() * 5.0;
+	}
+	if (mouse_move)
+	{
+		if (left_click)
+		{
+			XMVECTOR pos = newcamera.r[3];
+			newcamera.r[3] = XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1));
+			newcamera = XMMatrixRotationX(-diffy*0.01f) * newcamera * XMMatrixRotationY(-diffx*0.01f);
+			newcamera.r[3] = pos;
+		}
+	}
+
+	XMStoreFloat4x4(&camera, newcamera);
+	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, newcamera)));
+	mouse_move = false;
 }
 
 // Rotate the 3D cube model a set amount of radians.
