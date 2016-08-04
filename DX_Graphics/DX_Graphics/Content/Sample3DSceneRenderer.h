@@ -39,9 +39,11 @@ namespace DX_Graphics
 		Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_vertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_pixelShader;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_constantBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		l_constantBuffer;
 
 		// System resources for cube geometry.
 		ModelViewProjectionConstantBuffer	m_constantBufferData;
+		LightData m_constantlightbufferdata;
 		uint32	m_indexCount;
 
 		// Variables used with the rendering loop.
@@ -49,8 +51,10 @@ namespace DX_Graphics
 		float	m_degreesPerSecond;
 		bool	m_tracking;
 
-		XMFLOAT4X4 world, camera, proj;
+		XMFLOAT4X4 world, camera, proj, light;
 
+		//ambient light variables 
+		XMFLOAT4 a_light;
 	};
 }
 

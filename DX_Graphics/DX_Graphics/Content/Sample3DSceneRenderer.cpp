@@ -18,11 +18,17 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 {
 	CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
-	static const XMVECTORF32 eye = { 0.0f, 0.0f, -1.5f, 0.0f };
+	static const XMVECTORF32 eye = { 0.0f, 0.0f, -2.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, 0.0f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
 	XMStoreFloat4x4(&camera, XMMatrixLookAtRH(eye, at, up));
 	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtRH(eye, at, up))));
+	XMStoreFloat4x4(&light, XMMatrixIdentity());
+	XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, +2.0f, 0.0f, 1.0f)));
+	XMStoreFloat4(&m_constantlightbufferdata.light_dir, XMLoadFloat4(&XMFLOAT4(1.0f, -2.0f, 0.0f, 1.0f)));
+	a_light = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&a_light));
+
 }
 
 // Initializes view parameters when the window size changes.
@@ -63,7 +69,7 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 		);
 
 	// Eye is at (0,0.7,1.5), looking at point (0,-0.1,0) with the up-vector along the y-axis.
-	static const XMVECTORF32 eye = { 0.0f, 0.7f, 1.5f, 0.0f };
+	static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
 
@@ -79,11 +85,6 @@ extern float diffx;
 extern float diffy;
 extern char buttons[256];
 
-//extern bool w_down;
-//extern bool a_down;
-//extern bool s_down;
-//extern bool d_down;
-
 // Called once per frame, rotates the cube and calculates the model and view matrices.
 void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 {
@@ -96,7 +97,6 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 
 		Rotate(radians);
 	}
-	//XMMATRIX newcamera = camera;
 	XMMATRIX newcamera = XMLoadFloat4x4(&camera);
 
 	if (buttons['W'])
@@ -137,8 +137,12 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 // Rotate the 3D cube model a set amount of radians.
 void Sample3DSceneRenderer::Rotate(float radians)
 {
+	XMMATRIX orbit = XMMatrixIdentity();
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(2.0f, 0.0f, 0.0f, 1.0f));
+	orbit = XMMatrixRotationY(radians) * orbit;
+	orbit = orbit * XMMatrixRotationY(radians);
 	// Prepare to pass the updated model matrix to the shader
-	XMStoreFloat4x4(&m_constantBufferData.model, XMMatrixTranspose(XMMatrixRotationY(radians)));
+	XMStoreFloat4x4(&m_constantBufferData.model, XMMatrixTranspose(orbit));
 }
 
 void Sample3DSceneRenderer::StartTracking()
@@ -182,7 +186,15 @@ void Sample3DSceneRenderer::Render()
 		0,
 		0
 		);
-
+	context->UpdateSubresource1(
+		l_constantBuffer.Get(),
+		0,
+		NULL,
+		&m_constantlightbufferdata,
+		0,
+		0,
+		0
+		);
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPositionColor);
 	UINT offset = 0;
@@ -226,7 +238,14 @@ void Sample3DSceneRenderer::Render()
 		nullptr,
 		0
 		);
-
+	//send constant buffer to gpu
+	context->PSSetConstantBuffers1(
+		1,
+		1,
+		l_constantBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+		);
 	// Draw the objects.
 	context->DrawIndexed(
 		m_indexCount,
@@ -254,7 +273,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 
 		static const D3D11_INPUT_ELEMENT_DESC vertexDesc [] =
 		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },//D3D11_APPEND_ALIGNED_ELEMENT fith paramater
 			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
 
@@ -288,6 +307,14 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 				&m_constantBuffer
 				)
 			);
+		CD3D11_BUFFER_DESC light_constantBufferDesc(sizeof(LightData), D3D11_BIND_CONSTANT_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&light_constantBufferDesc,
+				nullptr,
+				&l_constantBuffer
+			)
+		);
 	});
 
 	// Once both shaders are loaded, create the mesh.
