@@ -86,5 +86,8 @@
     <None Include="Light.hlsli">
       <Filter>Content</Filter>
     </None>
+    <None Include="Assets\pyramid.obj">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
 </Project>

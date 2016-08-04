@@ -20,5 +20,6 @@ namespace DX_Graphics
 	{
 		DirectX::XMFLOAT3 pos;
 		DirectX::XMFLOAT3 color;
+		DirectX::XMFLOAT3 normal;
 	};
 }
