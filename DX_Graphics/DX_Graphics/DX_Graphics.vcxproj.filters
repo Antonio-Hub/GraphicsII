@@ -67,11 +67,13 @@
     <ClCompile Include="App.cpp" />
     <ClCompile Include="DX_GraphicsMain.cpp" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="ObjLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="DX_GraphicsMain.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="ObjLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\StoreLogo.png">
@@ -89,5 +91,8 @@
     <None Include="Assets\pyramid.obj">
       <Filter>Assets</Filter>
     </None>
+    <None Include="pyramid.obj" />
+    <None Include="talon.obj" />
+    <None Include="talon1.obj" />
   </ItemGroup>
 </Project>

@@ -3,10 +3,10 @@
 #include "..\Common\DeviceResources.h"
 #include "ShaderStructures.h"
 #include "..\Common\StepTimer.h"
-
+#include <vector>
 #include <DirectXMath.h>
 using namespace DirectX;
-
+using namespace std;
 namespace DX_Graphics
 {
 	// This sample renderer instantiates a basic rendering pipeline.

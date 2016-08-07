@@ -2,7 +2,7 @@
 #include "Sample3DSceneRenderer.h"
 
 #include "..\Common\DirectXHelper.h"
-
+#include <ObjLoader.h>
 using namespace DX_Graphics;
 
 using namespace DirectX;
@@ -29,6 +29,11 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	a_light = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&a_light));
 
+	vector<XMFLOAT3> obj_vertices;
+	vector<XMFLOAT2> obj_uvs;
+	vector<XMFLOAT3> obj_normals;
+	ObjLoader obj;
+	obj.loadOBJ("pyramid.obj", obj_vertices, obj_uvs, obj_normals);
 }
 
 // Initializes view parameters when the window size changes.
