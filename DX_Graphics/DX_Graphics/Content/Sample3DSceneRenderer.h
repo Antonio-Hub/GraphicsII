@@ -5,6 +5,8 @@
 #include "..\Common\StepTimer.h"
 #include <vector>
 #include <DirectXMath.h>
+#include <ObjLoader.h>
+
 using namespace DirectX;
 using namespace std;
 namespace DX_Graphics
@@ -43,18 +45,23 @@ namespace DX_Graphics
 
 		// System resources for cube geometry.
 		ModelViewProjectionConstantBuffer	m_constantBufferData;
-		LightData m_constantlightbufferdata;
 		uint32	m_indexCount;
-
+		//light resources
+		LightData m_constantlightbufferdata;
+		
 		// Variables used with the rendering loop.
 		bool	m_loadingComplete;
 		float	m_degreesPerSecond;
 		bool	m_tracking;
+		XMFLOAT4X4 world, camera, proj;
 
-		XMFLOAT4X4 world, camera, proj, light;
-
-		//ambient light variables 
-		XMFLOAT4 a_light;
+		//model verts, uvs, and normals
+		ObjLoader obj;
+		vector<XMFLOAT3> obj_vertices;
+		vector<XMFLOAT2> obj_uvs;
+		vector<XMFLOAT3> obj_normals;
+		vector<unsigned short> obj_vertexIndices;
+		vector<unsigned int> obj_normalIndices;
 	};
 }
 

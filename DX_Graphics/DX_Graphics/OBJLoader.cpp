@@ -9,16 +9,18 @@ ObjLoader::ObjLoader()
 bool ObjLoader::loadOBJ(
 	const char * path,
 	vector<XMFLOAT3> & out_vertices,
-	vector<XMFLOAT2> & out_uv,
+	//vector<XMFLOAT2> & out_uv,
 	vector<XMFLOAT3> & out_normals
-)
+	//vector<unsigned short> & _vertexIndices,
+	//vector<unsigned int> & _normalIndices
+	)
 {
 	vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 	vector<XMFLOAT3>temp_vertices;
 	vector<XMFLOAT2>temp_uv;
 	vector<XMFLOAT3>temp_normals;
 	FILE * file;
-	fopen_s(&file, "pyramid.obj", "r");
+	fopen_s(&file, path, "r");
 	if (file == NULL)
 	{
 		printf("Impossible to open file! \n");
@@ -42,13 +44,13 @@ bool ObjLoader::loadOBJ(
 			XMFLOAT2 uv;
 			//ZeroMemory(&uv, sizeof(XMFLOAT2));
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			temp_uv.push_back(uv);
+			//temp_uv.push_back(uv);
 		}
 		else if (strcmp(lineHeader, "vn") == 0)
 		{
 			XMFLOAT3 nor;
 			ZeroMemory(&nor, sizeof(XMFLOAT3));
-			fscanf_s(file, "%f %f %f\n", &nor.x, &nor.y, &nor.z);
+			fscanf(file, "%f %f %f\n", &nor.x, &nor.y, &nor.z);
 			temp_normals.push_back(nor);
 		}
 		else if (strcmp(lineHeader, "f") == 0)
@@ -61,15 +63,15 @@ bool ObjLoader::loadOBJ(
 				printf("File can't be read by our simple parser : (Try exporting with other options)");
 				return false;
 			}
-			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[1]);
 			vertexIndices.push_back(vertexIndex[2]);
-			uvIndices.push_back(uvIndex[0]);
+			vertexIndices.push_back(vertexIndex[1]);
+			vertexIndices.push_back(vertexIndex[0]);
+		/*	uvIndices.push_back(uvIndex[0]);
 			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);
-			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[1]);
+			uvIndices.push_back(uvIndex[2]);*/
 			normalIndices.push_back(normalIndex[2]);
+			normalIndices.push_back(normalIndex[1]);
+			normalIndices.push_back(normalIndex[0]);
 
 		}
 	}
@@ -79,10 +81,10 @@ bool ObjLoader::loadOBJ(
 		XMFLOAT3 vertex = temp_vertices[vertexIndex - 1];
 		out_vertices.push_back(vertex);
 
-		unsigned int uvIndex = uvIndices[i];
+		/*unsigned int uvIndex = uvIndices[i];
 		XMFLOAT2 uv = temp_uv[uvIndex - 1];
 		out_uv.push_back(uv);
-
+*/
 		unsigned int normalIndex = normalIndices[i];
 		XMFLOAT3 normal = temp_normals[normalIndex - 1];
 		out_normals.push_back(normal);

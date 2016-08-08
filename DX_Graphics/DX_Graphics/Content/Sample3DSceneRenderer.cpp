@@ -2,7 +2,7 @@
 #include "Sample3DSceneRenderer.h"
 
 #include "..\Common\DirectXHelper.h"
-#include <ObjLoader.h>
+
 using namespace DX_Graphics;
 
 using namespace DirectX;
@@ -16,24 +16,26 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	m_tracking(false),
 	m_deviceResources(deviceResources)
 {
+
+	////Load model
+	obj.loadOBJ("pyramid.obj", obj_vertices, obj_normals);
+	m_indexCount = obj_vertices.size();
+	//m_indexCount = 36; 
+
+
 	CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
+	//camera data
 	static const XMVECTORF32 eye = { 0.0f, 0.0f, -2.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, 0.0f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
 	XMStoreFloat4x4(&camera, XMMatrixLookAtRH(eye, at, up));
 	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtRH(eye, at, up))));
-	XMStoreFloat4x4(&light, XMMatrixIdentity());
+
+	//light data
 	XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, +2.0f, 0.0f, 1.0f)));
 	XMStoreFloat4(&m_constantlightbufferdata.light_dir, XMLoadFloat4(&XMFLOAT4(1.0f, -2.0f, 0.0f, 1.0f)));
-	a_light = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&a_light));
-
-	vector<XMFLOAT3> obj_vertices;
-	vector<XMFLOAT2> obj_uvs;
-	vector<XMFLOAT3> obj_normals;
-	ObjLoader obj;
-	obj.loadOBJ("pyramid.obj", obj_vertices, obj_uvs, obj_normals);
+	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)));
 }
 
 // Initializes view parameters when the window size changes.
@@ -77,8 +79,11 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-
+	XMStoreFloat4x4(&camera, XMMatrixLookAtRH(eye, at, up));
 	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixLookAtRH(eye, at, up)));
+	XMStoreFloat4x4(&m_constantBufferData.model, XMMatrixTranspose(XMMatrixIdentity()));
+
+
 }
 
 using namespace Windows::UI::Core;
@@ -143,9 +148,9 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 void Sample3DSceneRenderer::Rotate(float radians)
 {
 	XMMATRIX orbit = XMMatrixIdentity();
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(2.0f, 0.0f, 0.0f, 1.0f));
+	/*orbit.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 	orbit = XMMatrixRotationY(radians) * orbit;
-	orbit = orbit * XMMatrixRotationY(radians);
+	orbit = orbit * XMMatrixRotationY(radians);*/
 	// Prepare to pass the updated model matrix to the shader
 	XMStoreFloat4x4(&m_constantBufferData.model, XMMatrixTranspose(orbit));
 }
@@ -211,11 +216,11 @@ void Sample3DSceneRenderer::Render()
 		&offset
 		);
 
-	context->IASetIndexBuffer(
-		m_indexBuffer.Get(),
-		DXGI_FORMAT_R16_UINT, // Each index is one 16-bit unsigned integer (short).
-		0
-		);
+	//context->IASetIndexBuffer(
+	//	m_indexBuffer.Get(),
+	//	DXGI_FORMAT_R16_UINT, // Each index is one 16-bit unsigned integer (short).
+	//	0
+	//	);
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -252,15 +257,18 @@ void Sample3DSceneRenderer::Render()
 		nullptr
 		);
 	// Draw the objects.
-	context->DrawIndexed(
-		m_indexCount,
-		0,
-		0
-		);
+	//context->DrawIndexed(
+	//	m_indexCount,
+	//	0,
+	//	0
+	//	);
+	context->Draw(m_indexCount, 0);
 }
 
 void Sample3DSceneRenderer::CreateDeviceDependentResources()
 {
+
+
 	// Load shaders asynchronously.
 	auto loadVSTask = DX::ReadDataAsync(L"SampleVertexShader.cso");
 	auto loadPSTask = DX::ReadDataAsync(L"SamplePixelShader.cso");
@@ -278,9 +286,9 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 
 		static const D3D11_INPUT_ELEMENT_DESC vertexDesc [] =
 		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },//D3D11_APPEND_ALIGNED_ELEMENT fith paramater
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
 
 		DX::ThrowIfFailed(
@@ -294,7 +302,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 			);
 	});
 
-	// After the pixel shader file is loaded, create the shader and constant buffer.
+		// After the pixel shader file is loaded, create the shader and constant buffer.
 	auto createPSTask = loadPSTask.then([this](const std::vector<byte>& fileData) {
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreatePixelShader(
@@ -302,17 +310,17 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 				fileData.size(),
 				nullptr,
 				&m_pixelShader
-				)
-			);
+			)
+		);
 
-		CD3D11_BUFFER_DESC constantBufferDesc(sizeof(ModelViewProjectionConstantBuffer) , D3D11_BIND_CONSTANT_BUFFER);
+		CD3D11_BUFFER_DESC constantBufferDesc(sizeof(ModelViewProjectionConstantBuffer)*m_indexCount, D3D11_BIND_CONSTANT_BUFFER);
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateBuffer(
 				&constantBufferDesc,
 				nullptr,
 				&m_constantBuffer
-				)
-			);
+			)
+		);
 		CD3D11_BUFFER_DESC light_constantBufferDesc(sizeof(LightData), D3D11_BIND_CONSTANT_BUFFER);
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateBuffer(
@@ -324,26 +332,73 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	});
 
 	// Once both shaders are loaded, create the mesh.
-	auto createCubeTask = (createPSTask && createVSTask).then([this] () {
-
-		// Load mesh vertices. Each vertex has a position and a color.
-		static const VertexPositionColor cubeVertices[] = 
+	auto createCubeTask = (createPSTask && createVSTask).then([this] (){
+	
+		VertexPositionColor *cubeVertices;
+		cubeVertices = new VertexPositionColor[(const int)m_indexCount];
+		ZeroMemory(cubeVertices, sizeof(VertexPositionColor)*m_indexCount);
+		for (size_t i = 0; i < m_indexCount; i++)
 		{
-			{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-			{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		};
+			cubeVertices[i].pos = obj_vertices[i];
+			cubeVertices[i].normal = obj_normals[i];
+			cubeVertices[i].color = XMFLOAT3(1.0f, 1.0f, 1.0f); //XMFLOAT3(0.1f * (float)i, 1.0f,(float)i - 0.1f);
+		}
+		//static const VertexPositionColor cubeVertices[] = 
+		//{
+		//	0{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	1{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	2{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	3{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	4{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	5{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	6{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	7{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//};
+		//static const VertexPositionColor cubeVertices[] = 
+		//{
+		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
+		//};
 
 		D3D11_SUBRESOURCE_DATA vertexBufferData = {0};
 		vertexBufferData.pSysMem = cubeVertices;
 		vertexBufferData.SysMemPitch = 0;
 		vertexBufferData.SysMemSlicePitch = 0;
-		CD3D11_BUFFER_DESC vertexBufferDesc(sizeof(cubeVertices), D3D11_BIND_VERTEX_BUFFER);
+		CD3D11_BUFFER_DESC vertexBufferDesc(sizeof(VertexPositionColor)*m_indexCount, D3D11_BIND_VERTEX_BUFFER);
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateBuffer(
 				&vertexBufferDesc,
@@ -357,47 +412,49 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 		// For example: 0,2,1 means that the vertices with indexes
 		// 0, 2 and 1 from the vertex buffer compose the 
 		// first triangle of this mesh.
-		static const unsigned short cubeIndices [] =
-		{
-			0,2,1, // -x
-			1,2,3,
-
-			4,5,6, // +x
-			5,7,6,
-
-			0,1,5, // -y
-			0,5,4,
-
-			2,6,7, // +y
-			2,7,3,
-
-			0,4,6, // -z
-			0,6,2,
-
-			1,3,7, // +z
-			1,7,5,
-		};
-
-		m_indexCount = ARRAYSIZE(cubeIndices);
-
-		D3D11_SUBRESOURCE_DATA indexBufferData = {0};
-		indexBufferData.pSysMem = cubeIndices;
-		indexBufferData.SysMemPitch = 0;
-		indexBufferData.SysMemSlicePitch = 0;
-		CD3D11_BUFFER_DESC indexBufferDesc(sizeof(cubeIndices), D3D11_BIND_INDEX_BUFFER);
-		DX::ThrowIfFailed(
-			m_deviceResources->GetD3DDevice()->CreateBuffer(
-				&indexBufferDesc,
-				&indexBufferData,
-				&m_indexBuffer
-				)
-			);
+		//static const unsigned short cubeIndices [] =
+		//{
+		//	0,2,1, // -x
+		//	1,2,3,
+		//	4,5,6, // +x
+		//	5,7,6,
+		//	0,1,5, // -y
+		//	0,5,4,
+		//	2,6,7, // +y
+		//	2,7,3,
+		//	0,4,6, // -z
+		//	0,6,2,
+		//	1,3,7, // +z
+		//	1,7,5,
+		//};
+		//const unsigned int vertexindices_count = obj_vertexIndices.size();
+		//unsigned short *cubeIndices;
+		//cubeIndices = new unsigned short[vertexindices_count];
+		//m_indexCount = vertexindices_count; //ARRAYSIZE(cubeIndices);
+		//for (size_t i = 0; i < vertexindices_count; i++)
+		//{
+		//	cubeIndices[i] = obj_vertexIndices[i]-1;
+		//}
+		////m_indexCount = ARRAYSIZE(cubeIndices);
+		//D3D11_SUBRESOURCE_DATA indexBufferData = {0};
+		//indexBufferData.pSysMem = cubeIndices;
+		//indexBufferData.SysMemPitch = 0;
+		//indexBufferData.SysMemSlicePitch = 0;
+		//CD3D11_BUFFER_DESC indexBufferDesc(sizeof(cubeIndices), D3D11_BIND_INDEX_BUFFER);
+		//DX::ThrowIfFailed(
+		//	m_deviceResources->GetD3DDevice()->CreateBuffer(
+		//		&indexBufferDesc,
+		//		&indexBufferData,
+		//		&m_indexBuffer
+		//		)
+		//	);
 	});
 
 	// Once the cube is loaded, the object is ready to be rendered.
 	createCubeTask.then([this] () {
 		m_loadingComplete = true;
 	});
+
 }
 
 void Sample3DSceneRenderer::ReleaseDeviceDependentResources()
@@ -409,4 +466,5 @@ void Sample3DSceneRenderer::ReleaseDeviceDependentResources()
 	m_constantBuffer.Reset();
 	m_vertexBuffer.Reset();
 	m_indexBuffer.Reset();
+	
 }
