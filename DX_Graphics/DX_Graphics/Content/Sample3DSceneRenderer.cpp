@@ -1,12 +1,19 @@
 ﻿#include "pch.h"
 #include "Sample3DSceneRenderer.h"
-
+#include <atomic>
 #include "..\Common\DirectXHelper.h"
 
 using namespace DX_Graphics;
-
+using namespace Windows::UI::Core;
 using namespace DirectX;
 using namespace Windows::Foundation;
+
+extern CoreWindow^ gwindow;
+extern bool mouse_move;
+extern bool left_click;
+extern float diffx;
+extern float diffy;
+extern char buttons[256];
 
 // Loads vertex and pixel shaders from files and instantiates the cube geometry.
 Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceResources>& deviceResources) :
@@ -16,12 +23,10 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	m_tracking(false),
 	m_deviceResources(deviceResources)
 {
-
 	////Load model
-	obj.loadOBJ("pyramid.obj", obj_vertices, obj_normals);
+	obj.loadOBJ("asteroid.obj", obj_vertices, obj_vertexIndices);
 	m_indexCount = obj_vertices.size();
-	//m_indexCount = 36; 
-
+	m_indexCount = obj_vertexIndices.size();
 
 	CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
@@ -29,12 +34,12 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	static const XMVECTORF32 eye = { 0.0f, 0.0f, -2.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, 0.0f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-	XMStoreFloat4x4(&camera, XMMatrixLookAtRH(eye, at, up));
-	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtRH(eye, at, up))));
+	XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
+	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtLH(eye, at, up))));
 
 	//light data
-	XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, +2.0f, 0.0f, 1.0f)));
-	XMStoreFloat4(&m_constantlightbufferdata.light_dir, XMLoadFloat4(&XMFLOAT4(1.0f, -2.0f, 0.0f, 1.0f)));
+	XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)));
+	XMStoreFloat4(&m_constantlightbufferdata.light_dir, XMLoadFloat4(&XMFLOAT4(-1.0f, -1.0f, 0.0f, 1.0f)));
 	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)));
 }
 
@@ -79,21 +84,13 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-	XMStoreFloat4x4(&camera, XMMatrixLookAtRH(eye, at, up));
-	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixLookAtRH(eye, at, up)));
-	XMStoreFloat4x4(&m_constantBufferData.model, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
+	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixLookAtLH(eye, at, up)));
 
+	XMStoreFloat4x4(&m_constantBufferData.w_model, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&m_constantBufferData.l_model, XMMatrixTranspose(XMMatrixIdentity()));
 
 }
-
-using namespace Windows::UI::Core;
-extern CoreWindow^ gwindow;
-#include <atomic>
-extern bool mouse_move;
-extern bool left_click;
-extern float diffx;
-extern float diffy;
-extern char buttons[256];
 
 // Called once per frame, rotates the cube and calculates the model and view matrices.
 void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
@@ -148,11 +145,13 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 void Sample3DSceneRenderer::Rotate(float radians)
 {
 	XMMATRIX orbit = XMMatrixIdentity();
-	/*orbit.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(2.0f, 0.0f, 0.0f, 1.0f));
 	orbit = XMMatrixRotationY(radians) * orbit;
-	orbit = orbit * XMMatrixRotationY(radians);*/
+	orbit = orbit * XMMatrixRotationY(radians);
 	// Prepare to pass the updated model matrix to the shader
-	XMStoreFloat4x4(&m_constantBufferData.model, XMMatrixTranspose(orbit));
+	XMStoreFloat4x4(&m_constantBufferData.w_model, XMMatrixTranspose(orbit));
+	//(&m_constantlightbufferdata.light_pos, XMMatrixTranspose(orbit));
+
 }
 
 void Sample3DSceneRenderer::StartTracking()
@@ -216,11 +215,11 @@ void Sample3DSceneRenderer::Render()
 		&offset
 		);
 
-	//context->IASetIndexBuffer(
-	//	m_indexBuffer.Get(),
-	//	DXGI_FORMAT_R16_UINT, // Each index is one 16-bit unsigned integer (short).
-	//	0
-	//	);
+	context->IASetIndexBuffer(
+		m_indexBuffer.Get(),
+		DXGI_FORMAT_R32_UINT, // Each index is one 16-bit unsigned integer (short).
+		0
+		);
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -256,13 +255,16 @@ void Sample3DSceneRenderer::Render()
 		nullptr,
 		nullptr
 		);
+
+	//texture set to PS 
+	context->PSSetShaderResources(0, 1, asteroidTex.GetAddressOf());
 	// Draw the objects.
-	//context->DrawIndexed(
-	//	m_indexCount,
-	//	0,
-	//	0
-	//	);
-	context->Draw(m_indexCount, 0);
+	context->DrawIndexed(
+		m_indexCount,
+		0,
+		0
+		);
+	//context->Draw(m_indexCount, 0);
 }
 
 void Sample3DSceneRenderer::CreateDeviceDependentResources()
@@ -272,6 +274,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	// Load shaders asynchronously.
 	auto loadVSTask = DX::ReadDataAsync(L"SampleVertexShader.cso");
 	auto loadPSTask = DX::ReadDataAsync(L"SamplePixelShader.cso");
+	HRESULT dbug = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"rock.dds", NULL, &asteroidTex);
 
 	// After the vertex shader file is loaded, create the shader and input layout.
 	auto createVSTask = loadVSTask.then([this](const std::vector<byte>& fileData) {
@@ -287,7 +290,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 		static const D3D11_INPUT_ELEMENT_DESC vertexDesc [] =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		};
 
@@ -313,7 +316,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 			)
 		);
 
-		CD3D11_BUFFER_DESC constantBufferDesc(sizeof(ModelViewProjectionConstantBuffer)*m_indexCount, D3D11_BIND_CONSTANT_BUFFER);
+		CD3D11_BUFFER_DESC constantBufferDesc(sizeof(ModelViewProjectionConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateBuffer(
 				&constantBufferDesc,
@@ -334,15 +337,15 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	// Once both shaders are loaded, create the mesh.
 	auto createCubeTask = (createPSTask && createVSTask).then([this] (){
 	
-		VertexPositionColor *cubeVertices;
-		cubeVertices = new VertexPositionColor[(const int)m_indexCount];
-		ZeroMemory(cubeVertices, sizeof(VertexPositionColor)*m_indexCount);
-		for (size_t i = 0; i < m_indexCount; i++)
-		{
-			cubeVertices[i].pos = obj_vertices[i];
-			cubeVertices[i].normal = obj_normals[i];
-			cubeVertices[i].color = XMFLOAT3(1.0f, 1.0f, 1.0f); //XMFLOAT3(0.1f * (float)i, 1.0f,(float)i - 0.1f);
-		}
+		//VertexPositionColor *cubeVertices;
+		//cubeVertices = new VertexPositionColor[(const int)m_indexCount];
+		//ZeroMemory(cubeVertices, sizeof(VertexPositionColor)*m_indexCount);
+		//for (size_t i = 0; i < m_indexCount; i++)
+		//{
+		//	cubeVertices[i].pos = obj_vertices[i];
+		//	cubeVertices[i].normal = obj_normals[i];
+		//	cubeVertices[i].uv = XMFLOAT2(1.0f, 1.0f); //XMFLOAT3(0.1f * (float)i, 1.0f,(float)i - 0.1f);
+		//}
 		//static const VertexPositionColor cubeVertices[] = 
 		//{
 		//	0{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
@@ -394,18 +397,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
 		//};
 
-		D3D11_SUBRESOURCE_DATA vertexBufferData = {0};
-		vertexBufferData.pSysMem = cubeVertices;
-		vertexBufferData.SysMemPitch = 0;
-		vertexBufferData.SysMemSlicePitch = 0;
-		CD3D11_BUFFER_DESC vertexBufferDesc(sizeof(VertexPositionColor)*m_indexCount, D3D11_BIND_VERTEX_BUFFER);
-		DX::ThrowIfFailed(
-			m_deviceResources->GetD3DDevice()->CreateBuffer(
-				&vertexBufferDesc,
-				&vertexBufferData,
-				&m_vertexBuffer
-				)
-			);
+
 
 		// Load mesh indices. Each trio of indices represents
 		// a triangle to be rendered on the screen.
@@ -436,19 +428,34 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 		//	cubeIndices[i] = obj_vertexIndices[i]-1;
 		//}
 		////m_indexCount = ARRAYSIZE(cubeIndices);
-		//D3D11_SUBRESOURCE_DATA indexBufferData = {0};
-		//indexBufferData.pSysMem = cubeIndices;
-		//indexBufferData.SysMemPitch = 0;
-		//indexBufferData.SysMemSlicePitch = 0;
-		//CD3D11_BUFFER_DESC indexBufferDesc(sizeof(cubeIndices), D3D11_BIND_INDEX_BUFFER);
-		//DX::ThrowIfFailed(
-		//	m_deviceResources->GetD3DDevice()->CreateBuffer(
-		//		&indexBufferDesc,
-		//		&indexBufferData,
-		//		&m_indexBuffer
-		//		)
-		//	);
+
 	});
+
+	D3D11_SUBRESOURCE_DATA vertexBufferData = { 0 };
+	vertexBufferData.pSysMem = obj_vertices.data();
+	vertexBufferData.SysMemPitch = 0;
+	vertexBufferData.SysMemSlicePitch = 0;
+	CD3D11_BUFFER_DESC vertexBufferDesc(sizeof(VertexPositionColor)*m_indexCount, D3D11_BIND_VERTEX_BUFFER);
+	DX::ThrowIfFailed(
+		m_deviceResources->GetD3DDevice()->CreateBuffer(
+			&vertexBufferDesc,
+			&vertexBufferData,
+			&m_vertexBuffer
+		)
+	);
+
+	D3D11_SUBRESOURCE_DATA indexBufferData = { 0 };
+	indexBufferData.pSysMem = obj_vertexIndices.data();;
+	indexBufferData.SysMemPitch = 0;
+	indexBufferData.SysMemSlicePitch = 0;
+	CD3D11_BUFFER_DESC indexBufferDesc(sizeof(unsigned int) * m_indexCount, D3D11_BIND_INDEX_BUFFER);
+	DX::ThrowIfFailed(
+		m_deviceResources->GetD3DDevice()->CreateBuffer(
+			&indexBufferDesc,
+			&indexBufferData,
+			&m_indexBuffer
+		)
+	);
 
 	// Once the cube is loaded, the object is ready to be rendered.
 	createCubeTask.then([this] () {

@@ -6,7 +6,8 @@
 #include <vector>
 #include <DirectXMath.h>
 #include <ObjLoader.h>
-
+#include "Content\ShaderStructures.h"
+#include "DDSTextureLoader.h"
 using namespace DirectX;
 using namespace std;
 namespace DX_Graphics
@@ -57,11 +58,11 @@ namespace DX_Graphics
 
 		//model verts, uvs, and normals
 		ObjLoader obj;
-		vector<XMFLOAT3> obj_vertices;
-		vector<XMFLOAT2> obj_uvs;
-		vector<XMFLOAT3> obj_normals;
-		vector<unsigned short> obj_vertexIndices;
-		vector<unsigned int> obj_normalIndices;
+		vector<VertexPositionColor> obj_vertices;
+		vector<unsigned int> obj_vertexIndices;
+
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		asteroidTex;
+
 	};
 }
 

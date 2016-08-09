@@ -68,17 +68,26 @@
     <ClCompile Include="DX_GraphicsMain.cpp" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="ObjLoader.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="DX_GraphicsMain.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="ObjLoader.h" />
+    <ClInclude Include="DDSTextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\StoreLogo.png">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="RT_2D_Rock_Asteroid_Diffuse.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="RT_2D_Rock_Asteroid_Diffuse.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="rock.dds" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -93,6 +102,11 @@
     </None>
     <None Include="pyramid.obj" />
     <None Include="talon.obj" />
-    <None Include="talon1.obj" />
+    <None Include="bush.obj" />
+    <None Include="wall.obj" />
+    <None Include="resources.obj" />
+    <None Include="asteroid.obj" />
+    <None Include="asteroiddonut.obj" />
+    <None Include="meteorlong.obj" />
   </ItemGroup>
 </Project>

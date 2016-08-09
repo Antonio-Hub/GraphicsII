@@ -8,9 +8,9 @@ ObjLoader::ObjLoader()
 
 bool ObjLoader::loadOBJ(
 	const char * path,
-	vector<XMFLOAT3> & out_vertices,
+	vector<VertexPositionColor> & out_vertices,
 	//vector<XMFLOAT2> & out_uv,
-	vector<XMFLOAT3> & out_normals
+	vector<unsigned int> & out_Indices
 	//vector<unsigned short> & _vertexIndices,
 	//vector<unsigned int> & _normalIndices
 	)
@@ -42,9 +42,10 @@ bool ObjLoader::loadOBJ(
 		else if (strcmp(lineHeader, "vt") == 0)
 		{
 			XMFLOAT2 uv;
-			//ZeroMemory(&uv, sizeof(XMFLOAT2));
+			ZeroMemory(&uv, sizeof(XMFLOAT2));
 			fscanf(file, "%f %f\n", &uv.x, &uv.y);
-			//temp_uv.push_back(uv);
+			//uv.y = 1-uv.y;
+			temp_uv.push_back(uv);
 		}
 		else if (strcmp(lineHeader, "vn") == 0)
 		{
@@ -63,31 +64,32 @@ bool ObjLoader::loadOBJ(
 				printf("File can't be read by our simple parser : (Try exporting with other options)");
 				return false;
 			}
+			vertexIndices.push_back(vertexIndex[0]);
 			vertexIndices.push_back(vertexIndex[2]);
 			vertexIndices.push_back(vertexIndex[1]);
-			vertexIndices.push_back(vertexIndex[0]);
-		/*	uvIndices.push_back(uvIndex[0]);
+			uvIndices.push_back(uvIndex[0]);
 			uvIndices.push_back(uvIndex[1]);
-			uvIndices.push_back(uvIndex[2]);*/
+			uvIndices.push_back(uvIndex[2]);
+			normalIndices.push_back(normalIndex[0]);
 			normalIndices.push_back(normalIndex[2]);
 			normalIndices.push_back(normalIndex[1]);
-			normalIndices.push_back(normalIndex[0]);
 
 		}
 	}
 	for (size_t i = 0; i < vertexIndices.size(); i++)
 	{
+		VertexPositionColor t;
 		unsigned int vertexIndex = vertexIndices[i];
-		XMFLOAT3 vertex = temp_vertices[vertexIndex - 1];
-		out_vertices.push_back(vertex);
+		t.pos = temp_vertices[vertexIndex - 1];
 
-		/*unsigned int uvIndex = uvIndices[i];
-		XMFLOAT2 uv = temp_uv[uvIndex - 1];
-		out_uv.push_back(uv);
-*/
+		unsigned int uvIndex = uvIndices[i];
+		t.uv = temp_uv[uvIndex - 1];
+
 		unsigned int normalIndex = normalIndices[i];
-		XMFLOAT3 normal = temp_normals[normalIndex - 1];
-		out_normals.push_back(normal);
+		t.normal = temp_normals[normalIndex - 1];
+
+		out_vertices.push_back(t);
+		out_Indices.push_back(i);
 	}
 	return true;
 }
