@@ -1,23 +1,20 @@
 // A constant buffer that stores the three basic column-major matrices for composing geometry.
 cbuffer ModelViewProjectionConstantBuffer : register(b0)
 {
-	matrix l_model;
-	matrix w_model;
 	matrix view;
 	matrix projection;
 };
-cbuffer LightData : register(b1)
+cbuffer Models : register(b1)
+{
+	matrix position;
+};
+cbuffer LightData : register(b2)
 {
 	float4 light_pos;
 	float4 light_dir;
 	float4 light_ambient;
 }
-cbuffer ModelViewProjectionConstantBuffer : register(b2)
-{
-	matrix model1;
-	matrix view1;
-	matrix projection1;
-};
+//buffer<float4x4> Instances : reg(t0)
 // Per-vertex data used as input to the vertex shader.
 struct VertexShaderInput
 {
@@ -36,6 +33,7 @@ struct PixelShaderInput
 
 };
 
+//(instancing index paramater needed)vert main uint instaceIndex: SV_InstanceID
 // Simple shader to do vertex processing on the GPU.
 PixelShaderInput main(VertexShaderInput input)
 {
@@ -45,14 +43,14 @@ PixelShaderInput main(VertexShaderInput input)
 	float4 nor = float4(normalize(input.normal), 0.0f);
 
 	// Transform the vertex position into projected space.
-	pos = mul(pos, w_model);
+	pos = mul(pos, position);
 	output.l_pos = pos.xyz;
 	pos = mul(pos, view);
 	pos = mul(pos, projection);
 	output.pos = pos;
 
 	//vertex normal
-	nor = mul(nor, w_model);
+	nor = mul(nor, position);
 	output.normal = nor;
 
 	// Pass the color through without modification.

@@ -32,7 +32,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
 	//direction lighting//
 	float LightRatio = clamp(dot(-light_dir, input.normal), 0.0f, 1.0f);
 	
-	c.xyz = Light_Ratio * float3(0.5f, 0.0f, 0.5f);
+	c.xyz = Light_Ratio * float3(0.7f, 0.7f, 0.2f);
 	c.xyz += LightRatio * float3(0.5f, 0.5f, 0.5f);
 
 	//float r = c.x * 1.0f * Light_Ratio;/** light_ambient.x * LightRatio;*/
@@ -41,5 +41,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
 	//c.x = r;
 	//c.y = g;
 	//c.z = b;
+	c = saturate(c);
+
 	return t * c;
 }

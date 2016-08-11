@@ -108,5 +108,6 @@
     <None Include="asteroid.obj" />
     <None Include="asteroiddonut.obj" />
     <None Include="meteorlong.obj" />
+    <None Include="sphere.obj" />
   </ItemGroup>
 </Project>

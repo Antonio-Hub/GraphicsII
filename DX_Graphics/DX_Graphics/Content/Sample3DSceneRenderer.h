@@ -37,19 +37,27 @@ namespace DX_Graphics
 
 		// Direct3D resources for cube geometry.
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
+		
+		//vetex and index buffers
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_vertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_indexBuffer;
+
+		//shaders
 		Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_vertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_pixelShader;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_constantBuffer;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		l_constantBuffer;
+
+
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_cameraConstBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_modelConstBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_lightConstantBuffer;
 
 		// System resources for cube geometry.
-		ModelViewProjectionConstantBuffer	m_constantBufferData;
+		ModelViewProjectionConstantBuffer	m_camera;
 		uint32	m_indexCount;
 		//light resources
 		LightData m_constantlightbufferdata;
-		
+		//model matrex
+		Models model;
 		// Variables used with the rendering loop.
 		bool	m_loadingComplete;
 		float	m_degreesPerSecond;
