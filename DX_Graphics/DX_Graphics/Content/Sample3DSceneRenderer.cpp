@@ -371,7 +371,7 @@ void Sample3DSceneRenderer::Render()
 		nullptr,
 		nullptr
 	);
-	//context->PSSetShaderResources(0, 1, skyBox.GetAddressOf());
+	context->PSSetShaderResources(0, 1, sunTex.GetAddressOf());
 
 	// Draw the objects.
 	context->DrawIndexed(
@@ -389,7 +389,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	auto loadVSTask = DX::ReadDataAsync(L"SampleVertexShader.cso");
 	auto loadPSTask = DX::ReadDataAsync(L"SamplePixelShader.cso");
 	HRESULT dbug = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"rock.dds", NULL, &asteroidTex);
-	//HRESULT dbug1 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"OutputCube.dds", NULL, &skyBox);
+	HRESULT dbug1 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"sunmap.dds", NULL, &sunTex);
 
 	
 

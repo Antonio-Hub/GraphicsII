@@ -89,6 +89,11 @@
     <Image Include="sunmap.png">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="marsmap1k.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="marsmap1k.dds" />
+    <Image Include="sunmap.dds" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />

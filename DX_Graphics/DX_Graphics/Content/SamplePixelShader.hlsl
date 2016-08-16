@@ -30,6 +30,8 @@ float4 main(PixelShaderInput input) : SV_TARGET
 	//point light//
 	float3 Light_Direction = normalize(light_pos.xyz - input.l_pos.xyz);
 	float Light_Ratio = clamp(dot(Light_Direction, normalize(input.normal.xyz)), 0.0f, 1.0f);
+	float p_lightAttenuation = 1.0f - clamp(length(light_pos.xyz - input.l_pos.xyz) / 20.0f, 0.0f, 1.0f);
+
 
 	//direction lighting//
 	float LightRatio = clamp(dot(-light_dir, input.normal), 0.0f, 1.0f);
@@ -37,12 +39,18 @@ float4 main(PixelShaderInput input) : SV_TARGET
 	//spotlight//
 	float3 s_lightDirection = normalize(spot_light_pos.xyz - input.l_pos.xyz);
 	float s_surfaceRatio = clamp(dot(-s_lightDirection, spot_light_dir), 0.0f, 1.0f);
-	float s_spotFactor = (s_surfaceRatio > 0.9f) ? 1 : 0;
+	//this line can be replaced with s_lightRadiusAttenuation
+	//float s_spotFactor = (s_surfaceRatio > 0.8f) ? 1 : 0;
 	float s_lightRatio = clamp(dot(s_lightDirection, input.normal.xyz), 0.0f, 1.0f);
+	float s_lightDistanceAttenuation = 1.0f - clamp(length(spot_light_pos.xyz - input.l_pos.xyz) / 20.0f, 0.0f, 1.0f);
+	float s_lightRadiusAttenuation = 1.0f - clamp((0.9f - s_surfaceRatio) / (0.9f - 0.8f), 0.0f, 1.0f);
 
-	c.xyz = Light_Ratio * float3(0.7f, 0.7f, 0.2f);
+	//point light
+	c.xyz = p_lightAttenuation * Light_Ratio * float3(0.7f, 0.7f, 0.2f);
+	//direction light
 	c.xyz += LightRatio * float3(0.5f, 0.5f, 0.5f);
-	c.xyz += s_spotFactor * s_lightRatio * float3(0.9f, 0.0f, 0.0f);
+	//spot light
+	c.xyz += s_lightRadiusAttenuation * s_lightDistanceAttenuation * /*s_spotFactor **/ s_lightRatio * float3(0.9f, 0.0f, 0.0f);
 
 	c = saturate(c);
 

@@ -72,7 +72,7 @@ namespace DX_Graphics
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_sunIndexBuffer;
 
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		asteroidTex;
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		skyBox;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		sunTex;
 
 		
 	};
