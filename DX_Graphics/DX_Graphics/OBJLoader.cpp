@@ -65,14 +65,14 @@ bool ObjLoader::loadOBJ(
 				return false;
 			}
 			vertexIndices.push_back(vertexIndex[0]);
-			vertexIndices.push_back(vertexIndex[2]);
 			vertexIndices.push_back(vertexIndex[1]);
+			vertexIndices.push_back(vertexIndex[2]);
 			uvIndices.push_back(uvIndex[0]);
 			uvIndices.push_back(uvIndex[1]);
 			uvIndices.push_back(uvIndex[2]);
 			normalIndices.push_back(normalIndex[0]);
-			normalIndices.push_back(normalIndex[2]);
 			normalIndices.push_back(normalIndex[1]);
+			normalIndices.push_back(normalIndex[2]);
 
 		}
 	}

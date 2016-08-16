@@ -19,31 +19,35 @@ extern char buttons[256];
 Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceResources>& deviceResources) :
 	m_loadingComplete(false),
 	m_degreesPerSecond(45),
-	m_indexCount(0),
+	asteroid_indexCount(0),
 	m_tracking(false),
 	m_deviceResources(deviceResources)
 {
-	////Load model
-	obj.loadOBJ("asteroid.obj", obj_vertices, obj_vertexIndices);
-	m_indexCount = obj_vertices.size();
-	m_indexCount = obj_vertexIndices.size();
+	////Load asteroid model
+	obj.loadOBJ("asteroid.obj", asteroid_vertices, asteroid_vertexIndices);
+	asteroid_indexCount = asteroid_vertexIndices.size();
+	////Load sun model
+	obj.loadOBJ("sphere.obj", sun_vertices, sun_vertexIndices);
+	sun_indexCount = sun_vertexIndices.size();
 
 	CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
 	//camera data
-	static const XMVECTORF32 eye = { 0.0f, 0.0f, -2.5f, 0.0f };
+	static const XMVECTORF32 eye = { 0.0f, 0.0f, -5.5f, 0.0f };
 	static const XMVECTORF32 at = { 0.0f, 0.0f, 0.0f, 0.0f };
 	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-	XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
+	XMStoreFloat4x4(&camera,XMMatrixInverse(NULL,  XMMatrixLookAtLH(eye, at, up)));
 
 	//model data
-	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtLH(eye, at, up))));
-	//XMStoreFloat4x4(&sun_constantBufferData.view, XMMatrixTranspose(XMMatrixInverse(0, XMMatrixLookAtLH(eye, at, up))));
+	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixLookAtLH(eye, at, up)));
 
 	//light data
 	XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f)));
 	XMStoreFloat4(&m_constantlightbufferdata.light_dir, XMLoadFloat4(&XMFLOAT4(-1.0f, -1.0f, 0.0f, 1.0f)));
 	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)));
+	XMStoreFloat4(&m_constantlightbufferdata.spot_light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
+	XMStoreFloat4(&m_constantlightbufferdata.spot_light_dir, XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
+
 }
 
 // Initializes view parameters when the window size changes.
@@ -67,7 +71,7 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	// this transform should not be applied.
 
 	// This sample makes use of a right-handed coordinate system using row-major matrices.
-	XMMATRIX perspectiveMatrix = XMMatrixPerspectiveFovRH(
+	XMMATRIX perspectiveMatrix = XMMatrixPerspectiveFovLH(
 		fovAngleY,
 		aspectRatio,
 		0.01f,
@@ -77,20 +81,20 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	XMFLOAT4X4 orientation = m_deviceResources->GetOrientationTransform3D();
 
 	XMMATRIX orientationMatrix = XMLoadFloat4x4(&orientation);
-
 	XMStoreFloat4x4(
 		&m_camera.projection,
 		XMMatrixTranspose(perspectiveMatrix * orientationMatrix)
 	);
 
 	// Eye is at (0,0.7,1.5), looking at point (0,-0.1,0) with the up-vector along the y-axis.
-	static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
-	static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
-	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-	XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
-	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixLookAtLH(eye, at, up)));
+	//static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
+	//static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
+	//static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
+	//XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
+	//XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixLookAtLH(eye, at, up)));
 
-	XMStoreFloat4x4(&model.position, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_asteroid, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(XMMatrixIdentity()));
 
 }
 
@@ -110,7 +114,7 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 
 	if (buttons['W'])
 	{
-		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * -timer.GetElapsedSeconds() * 5.0;
+		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * +timer.GetElapsedSeconds() * 5.0;
 	}
 
 	if (buttons['A'])
@@ -120,12 +124,38 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 
 	if (buttons['S'])
 	{
-		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * timer.GetElapsedSeconds() * 5.0;
+		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * -timer.GetElapsedSeconds() * 5.0;
 	}
 
 	if (buttons['D'])
 	{
 		newcamera.r[3] = newcamera.r[3] + newcamera.r[0] * timer.GetElapsedSeconds() * 5.0;
+	}
+	if (buttons['J'])
+	{
+		m_constantlightbufferdata.light_dir.x-=0.1f;
+	}
+	if (buttons['L'])
+	{
+		m_constantlightbufferdata.light_dir.x+= 0.1f;
+	}
+	if (buttons['I'])
+	{
+		m_constantlightbufferdata.light_dir.z-= 0.1f;
+	}
+	if (buttons['K'])
+	{
+		m_constantlightbufferdata.light_dir.z+= 0.1f;
+	}
+
+	if (buttons['R'])
+	{
+		XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, m_constantlightbufferdata.light_pos.y += 0.1f, 0.0f, 1.0f)));
+	}
+	if (buttons['F'])
+	{
+		XMStoreFloat4(&m_constantlightbufferdata.light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, m_constantlightbufferdata.light_pos.y -= 0.1f, 0.0f, 1.0f)));
+
 	}
 	if (mouse_move)
 	{
@@ -133,13 +163,16 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 		{
 			XMVECTOR pos = newcamera.r[3];
 			newcamera.r[3] = XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1));
-			newcamera = XMMatrixRotationX(-diffy*0.01f) * newcamera * XMMatrixRotationY(-diffx*0.01f);
+			newcamera = XMMatrixRotationX(diffy*0.01f) * newcamera * XMMatrixRotationY(diffx*0.01f);
 			newcamera.r[3] = pos;
 		}
 	}
 
 	XMStoreFloat4x4(&camera, newcamera);
 	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixInverse(0, newcamera)));
+	//move spotloght with camera
+	XMStoreFloat4(&m_constantlightbufferdata.spot_light_pos, XMLoadFloat4(&XMFLOAT4(newcamera.r[3].m128_f32[0], newcamera.r[3].m128_f32[1], newcamera.r[3].m128_f32[2], newcamera.r[3].m128_f32[3])));
+	XMStoreFloat4(&m_constantlightbufferdata.spot_light_dir, XMLoadFloat4(&XMFLOAT4(newcamera.r[2].m128_f32[0], newcamera.r[2].m128_f32[1], newcamera.r[2].m128_f32[2], newcamera.r[2].m128_f32[3])));
 
 	mouse_move = false;
 }
@@ -152,7 +185,7 @@ void Sample3DSceneRenderer::Rotate(float radians)
 	orbit = XMMatrixRotationY(radians) * orbit;
 	orbit = orbit * XMMatrixRotationY(radians);
 	// Prepare to pass the updated model matrix to the shader
-	XMStoreFloat4x4(&model.position, XMMatrixTranspose(orbit));
+	XMStoreFloat4x4(&w_asteroid, XMMatrixTranspose(orbit));
 
 }
 
@@ -168,6 +201,10 @@ void Sample3DSceneRenderer::Render()
 
 	auto context = m_deviceResources->GetD3DDeviceContext();
 
+	// Each vertex is one instance of the VertexPositionColor struct.
+	UINT stride = sizeof(VertexPositionColor);
+	UINT offset = 0;
+
 	// Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
@@ -178,6 +215,7 @@ void Sample3DSceneRenderer::Render()
 		0,
 		0
 	);
+	model.position = w_asteroid;
 	context->UpdateSubresource1(
 		m_modelConstBuffer.Get(),
 		0,
@@ -197,19 +235,16 @@ void Sample3DSceneRenderer::Render()
 		0
 	);
 
-	// Each vertex is one instance of the VertexPositionColor struct.
-	UINT stride = sizeof(VertexPositionColor);
-	UINT offset = 0;
 	//asteroid model
 	context->IASetVertexBuffers(
 		0,
 		1,
-		m_vertexBuffer.GetAddressOf(),
+		m_asteroidVertexBuffer.GetAddressOf(),
 		&stride,
 		&offset
 	);
 	context->IASetIndexBuffer(
-		m_indexBuffer.Get(),
+		m_asteroidIndexBuffer.Get(),
 		DXGI_FORMAT_R32_UINT,
 		0
 	);
@@ -249,7 +284,7 @@ void Sample3DSceneRenderer::Render()
 	);
 	//send constant buffer to gpu
 	context->PSSetConstantBuffers1(
-		1,
+		0,
 		1,
 		m_lightConstantBuffer.GetAddressOf(),
 		nullptr,
@@ -257,20 +292,19 @@ void Sample3DSceneRenderer::Render()
 	);
 	//texture set to PS
 	context->PSSetShaderResources(0, 1, asteroidTex.GetAddressOf());
+	//context->PSSetShaderResources(0, 1, skyBox.GetAddressOf());
 
-	//(this can be used to set a structured buffer for instancing)
-	//context->VSSetShaderResources();
-	//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^////////////////////////////
-
-	// Draw the objects.
+	// Draw the asteroid.
 	context->DrawIndexed(
-		m_indexCount,
+		asteroid_indexCount,
 		0,
 		0
 	);
-
-	XMStoreFloat4x4(&model.position,XMMatrixIdentity());
-
+//////////////////////////////////////////////////////////////////////////////////////////	
+	//change buffer matrix to be the suns location
+	//XMStoreFloat4x4(&model.position, XMMatrixIdentity());
+	model.position = w_sun;
+	//put the location in vram of gpu 
 	context->UpdateSubresource1(
 		m_modelConstBuffer.Get(),
 		0,
@@ -281,9 +315,67 @@ void Sample3DSceneRenderer::Render()
 		0
 	);
 
+	//sun model
+	context->IASetVertexBuffers(
+		0,
+		1,
+		m_sunVertexBuffer.GetAddressOf(),
+		&stride,
+		&offset
+	);
+
+	context->IASetIndexBuffer(
+		m_sunIndexBuffer.Get(),
+		DXGI_FORMAT_R32_UINT,
+		0
+	);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	context->IASetInputLayout(m_inputLayout.Get());
+
+	// Attach our vertex shader.
+	context->VSSetShader(
+		m_vertexShader.Get(),
+		nullptr,
+		0
+	);
+
+	// Attach our pixel shader.
+	context->PSSetShader(
+		m_pixelShader.Get(),
+		nullptr,
+		0
+	);
+
+	// Send the constant buffer to the graphics device.
+	context->VSSetConstantBuffers1(
+		0,
+		1,
+		m_cameraConstBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+
+	context->VSSetConstantBuffers1(
+		1,
+		1,
+		m_modelConstBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+	//send constant buffer to gpu
+	context->PSSetConstantBuffers1(
+		0,
+		1,
+		m_lightConstantBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+	//context->PSSetShaderResources(0, 1, skyBox.GetAddressOf());
+
 	// Draw the objects.
 	context->DrawIndexed(
-		m_indexCount,
+		sun_indexCount,
 		0,
 		0
 	);
@@ -297,6 +389,9 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	auto loadVSTask = DX::ReadDataAsync(L"SampleVertexShader.cso");
 	auto loadPSTask = DX::ReadDataAsync(L"SamplePixelShader.cso");
 	HRESULT dbug = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"rock.dds", NULL, &asteroidTex);
+	//HRESULT dbug1 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"OutputCube.dds", NULL, &skyBox);
+
+	
 
 	// After the vertex shader file is loaded, create the shader and input layout.
 	auto createVSTask = loadVSTask.then([this](const std::vector<byte>& fileData) {
@@ -367,137 +462,57 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	// Once both shaders are loaded, create the mesh.
 	auto createCubeTask = (createPSTask && createVSTask).then([this]() {
 
-		//VertexPositionColor *cubeVertices;
-		//cubeVertices = new VertexPositionColor[(const int)m_indexCount];
-		//ZeroMemory(cubeVertices, sizeof(VertexPositionColor)*m_indexCount);
-		//for (size_t i = 0; i < m_indexCount; i++)
-		//{
-		//	cubeVertices[i].pos = obj_vertices[i];
-		//	cubeVertices[i].normal = obj_normals[i];
-		//	cubeVertices[i].uv = XMFLOAT2(1.0f, 1.0f); //XMFLOAT3(0.1f * (float)i, 1.0f,(float)i - 0.1f);
-		//}
-		//static const VertexPositionColor cubeVertices[] = 
-		//{
-		//	0{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	1{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	2{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	3{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	4{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	5{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	6{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	7{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//};
-		//static const VertexPositionColor cubeVertices[] = 
-		//{
-		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f, -0.5f), XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f, -0.5f), XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f, -0.5f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f,  0.5f,  0.5f), XMFLOAT3(0.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3(-0.5f, -0.5f,  0.5f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f,  0.5f,  0.5f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//	{XMFLOAT3( 0.5f, -0.5f,  0.5f), XMFLOAT3(1.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) },
-		//};
-
-		// Load mesh indices. Each trio of indices represents
-		// a triangle to be rendered on the screen.
-		// For example: 0,2,1 means that the vertices with indexes
-		// 0, 2 and 1 from the vertex buffer compose the 
-		// first triangle of this mesh.
-		//static const unsigned short cubeIndices [] =
-		//{
-		//	0,2,1, // -x
-		//	1,2,3,
-		//	4,5,6, // +x
-		//	5,7,6,
-		//	0,1,5, // -y
-		//	0,5,4,
-		//	2,6,7, // +y
-		//	2,7,3,
-		//	0,4,6, // -z
-		//	0,6,2,
-		//	1,3,7, // +z
-		//	1,7,5,
-		//};
-		//const unsigned int vertexindices_count = obj_vertexIndices.size();
-		//unsigned short *cubeIndices;
-		//cubeIndices = new unsigned short[vertexindices_count];
-		//m_indexCount = vertexindices_count; //ARRAYSIZE(cubeIndices);
-		//for (size_t i = 0; i < vertexindices_count; i++)
-		//{
-		//	cubeIndices[i] = obj_vertexIndices[i]-1;
-		//}
-		////m_indexCount = ARRAYSIZE(cubeIndices);
-
+		//set buffer for the asteroid verts and index
+		D3D11_SUBRESOURCE_DATA vertexBufferData_asteroid = { 0 };
+		vertexBufferData_asteroid.pSysMem = asteroid_vertices.data();
+		vertexBufferData_asteroid.SysMemPitch = 0;
+		vertexBufferData_asteroid.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC vertexBufferDesc_asteroid(sizeof(VertexPositionColor)*asteroid_indexCount, D3D11_BIND_VERTEX_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&vertexBufferDesc_asteroid,
+				&vertexBufferData_asteroid,
+				&m_asteroidVertexBuffer
+			)
+		);
+		D3D11_SUBRESOURCE_DATA indexBufferData_asteroid = { 0 };
+		indexBufferData_asteroid.pSysMem = asteroid_vertexIndices.data();;
+		indexBufferData_asteroid.SysMemPitch = 0;
+		indexBufferData_asteroid.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC indexBufferDesc_asteroid(sizeof(unsigned int) * asteroid_indexCount, D3D11_BIND_INDEX_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&indexBufferDesc_asteroid,
+				&indexBufferData_asteroid,
+				&m_asteroidIndexBuffer
+			)
+		);
+		//set buffer for the sun verts and index
+		D3D11_SUBRESOURCE_DATA vertexBufferData_sun = { 0 };
+		vertexBufferData_sun.pSysMem = sun_vertices.data();
+		vertexBufferData_sun.SysMemPitch = 0;
+		vertexBufferData_sun.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC vertexBufferDesc_sun(sizeof(VertexPositionColor)*sun_indexCount, D3D11_BIND_VERTEX_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&vertexBufferDesc_sun,
+				&vertexBufferData_sun,
+				&m_sunVertexBuffer
+			)
+		);
+		D3D11_SUBRESOURCE_DATA indexBufferData_sun = { 0 };
+		indexBufferData_sun.pSysMem = sun_vertexIndices.data();
+		indexBufferData_sun.SysMemPitch = 0;
+		indexBufferData_sun.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC indexBufferDesc_sun(sizeof(unsigned int) * sun_indexCount, D3D11_BIND_INDEX_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&indexBufferDesc_sun,
+				&indexBufferData_sun,
+				&m_sunIndexBuffer
+			)
+		);
 	});
-
-	D3D11_SUBRESOURCE_DATA vertexBufferData = { 0 };
-	vertexBufferData.pSysMem = obj_vertices.data();
-	vertexBufferData.SysMemPitch = 0;
-	vertexBufferData.SysMemSlicePitch = 0;
-	CD3D11_BUFFER_DESC vertexBufferDesc(sizeof(VertexPositionColor)*m_indexCount, D3D11_BIND_VERTEX_BUFFER);
-	DX::ThrowIfFailed(
-		m_deviceResources->GetD3DDevice()->CreateBuffer(
-			&vertexBufferDesc,
-			&vertexBufferData,
-			&m_vertexBuffer
-		)
-	);
-	//DX::ThrowIfFailed(
-	//	m_deviceResources->GetD3DDevice()->CreateBuffer(
-	//		&vertexBufferDesc,
-	//		&vertexBufferData,
-	//		&sun_vertexBuffer
-	//	)
-	//);
-	D3D11_SUBRESOURCE_DATA indexBufferData = { 0 };
-	indexBufferData.pSysMem = obj_vertexIndices.data();;
-	indexBufferData.SysMemPitch = 0;
-	indexBufferData.SysMemSlicePitch = 0;
-	CD3D11_BUFFER_DESC indexBufferDesc(sizeof(unsigned int) * m_indexCount, D3D11_BIND_INDEX_BUFFER);
-	DX::ThrowIfFailed(
-		m_deviceResources->GetD3DDevice()->CreateBuffer(
-			&indexBufferDesc,
-			&indexBufferData,
-			&m_indexBuffer
-		)
-	);
-	//DX::ThrowIfFailed(
-	//	m_deviceResources->GetD3DDevice()->CreateBuffer(
-	//		&indexBufferDesc,
-	//		&indexBufferData,
-	//		&sun_indexBuffer
-	//	)
-	//);
-	// Once the cube is loaded, the object is ready to be rendered.
 	createCubeTask.then([this]() {
 		m_loadingComplete = true;
 	});
@@ -531,7 +546,8 @@ void Sample3DSceneRenderer::ReleaseDeviceDependentResources()
 	m_inputLayout.Reset();
 	m_pixelShader.Reset();
 	m_cameraConstBuffer.Reset();
-	m_vertexBuffer.Reset();
-	m_indexBuffer.Reset();
-
+	m_asteroidVertexBuffer.Reset();
+	m_asteroidIndexBuffer.Reset();
+	m_sunVertexBuffer.Reset();
+	m_sunIndexBuffer.Reset();
 }

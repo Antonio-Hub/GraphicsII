@@ -13,6 +13,8 @@ namespace DX_Graphics
 		DirectX::XMFLOAT4 light_pos;
 		DirectX::XMFLOAT4 light_dir;
 		DirectX::XMFLOAT4 light_ambient;
+		DirectX::XMFLOAT4 spot_light_pos;
+		DirectX::XMFLOAT4 spot_light_dir;
 	};
 	// Used to send per-vertex data to the vertex shader.
 	struct VertexPositionColor

@@ -8,12 +8,7 @@ cbuffer Models : register(b1)
 {
 	matrix position;
 };
-cbuffer LightData : register(b2)
-{
-	float4 light_pos;
-	float4 light_dir;
-	float4 light_ambient;
-}
+
 //buffer<float4x4> Instances : reg(t0)
 // Per-vertex data used as input to the vertex shader.
 struct VertexShaderInput

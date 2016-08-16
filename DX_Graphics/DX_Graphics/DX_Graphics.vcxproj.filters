@@ -81,13 +81,14 @@
     <Image Include="Assets\StoreLogo.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="RT_2D_Rock_Asteroid_Diffuse.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="RT_2D_Rock_Asteroid_Diffuse.dds">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="rock.dds" />
+    <Image Include="OutputCube.dds" />
+    <Image Include="..\..\..\Graphics 2\Graphics II Project Assets\3D\Environment\Planet06\planet06.jpg">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="sunmap.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -102,9 +103,6 @@
     </None>
     <None Include="pyramid.obj" />
     <None Include="talon.obj" />
-    <None Include="bush.obj" />
-    <None Include="wall.obj" />
-    <None Include="resources.obj" />
     <None Include="asteroid.obj" />
     <None Include="asteroiddonut.obj" />
     <None Include="meteorlong.obj" />

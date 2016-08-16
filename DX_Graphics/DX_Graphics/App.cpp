@@ -222,7 +222,6 @@ void DX_Graphics::App::OnPointerPressed(Windows::UI::Core::CoreWindow ^sender, W
 	mouse_move = true;
 }
 
-
 void DX_Graphics::App::OnPointerReleased(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
 {
 	diffx = 0;
@@ -230,7 +229,6 @@ void DX_Graphics::App::OnPointerReleased(Windows::UI::Core::CoreWindow ^sender, 
 	left_click = false;
 	mouse_move = false;
 }
-
 
 void DX_Graphics::App::OnPointerMoved(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
 {
@@ -245,7 +243,6 @@ void DX_Graphics::App::OnPointerMoved(Windows::UI::Core::CoreWindow ^sender, Win
 	prevY = Y;
 }
 
-
 void DX_Graphics::App::OnPointerExited(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::PointerEventArgs ^args)
 {
 	diffx = 0;
@@ -254,34 +251,13 @@ void DX_Graphics::App::OnPointerExited(Windows::UI::Core::CoreWindow ^sender, Wi
 	mouse_move = false;
 }
 
-//bool w_down = false;
-//bool a_down = false;
-//bool s_down = false;
-//bool d_down = false;
 char buttons[256] = {};
 void DX_Graphics::App::OnKeyDown(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::KeyEventArgs ^args)
 {
 	buttons[(unsigned int)args->VirtualKey] = true;
-	//if (args->VirtualKey == Windows::System::VirtualKey::W)
-	//	w_down = true;
-	//if (args->VirtualKey == Windows::System::VirtualKey::A)
-	//	a_down = true;
-	//if (args->VirtualKey == Windows::System::VirtualKey::S)
-	//	s_down = true;
-	//if (args->VirtualKey == Windows::System::VirtualKey::D)
-	//	d_down = true;
 }
-
 
 void DX_Graphics::App::OnKeyUp(Windows::UI::Core::CoreWindow ^sender, Windows::UI::Core::KeyEventArgs ^args)
 {
 	buttons[(unsigned int)args->VirtualKey] = false;
-	//if (args->VirtualKey == Windows::System::VirtualKey::W)
-	//	w_down = false;
-	//if (args->VirtualKey == Windows::System::VirtualKey::A)
-	//	a_down = false;
-	//if (args->VirtualKey == Windows::System::VirtualKey::S)
-	//	s_down = false;
-	//if (args->VirtualKey == Windows::System::VirtualKey::D)
-	//	d_down = false;
 }
