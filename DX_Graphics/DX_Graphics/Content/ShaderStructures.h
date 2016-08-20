@@ -27,4 +27,8 @@ namespace DX_Graphics
 	{
 		DirectX::XMFLOAT4X4 position;
 	};
+	struct InstanceModels
+	{
+		DirectX::XMFLOAT4X4 position[5];
+	};
 }

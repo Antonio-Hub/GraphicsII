@@ -34,28 +34,39 @@ namespace DX_Graphics
 
 		// Direct3D resources for cube geometry.
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
-		
+		//raster state
+		ID3D11RasterizerState * back_raster_state;
+		ID3D11RasterizerState * front_raster_state;
+
 		//shaders
+		Microsoft::WRL::ComPtr<ID3D11GeometryShader>m_geometryShader;
+		Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_vertextoGeometryShader;
+		Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_instanceingVertexShader;
 		Microsoft::WRL::ComPtr<ID3D11VertexShader>	m_vertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_pixelShader;
+		Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_skyboxpixelShader;
+
 
 		//constant buffers
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_cameraConstBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_modelConstBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_lightConstantBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_instancingModelConstBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_geomitryConstBuffer;
+
 
 		// System resources to send to GPU
 		ModelViewProjectionConstantBuffer	m_camera;
 		LightData m_constantlightbufferdata;
 		Models model;
+		InstanceModels instancemodels;
 
 		// Variables used with the rendering loop.
 		bool	m_loadingComplete;
 		float	m_degreesPerSecond;
 		bool	m_tracking;
 
-		XMFLOAT4X4 world, camera, proj, w_asteroid, w_sun;
-
+		XMFLOAT4X4 world, camera, proj, w_asteroid, w_sun, w_instancedmodel[5], w_skybox;
 		ObjLoader obj;
 
 		//asteroid Vertices, Indices, and buffers 
@@ -64,15 +75,28 @@ namespace DX_Graphics
 		uint32	asteroid_indexCount;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_asteroidVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_asteroidIndexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		asteroidTex;
 
+		//sun Vertices, Indices, and buffers 
 		vector<VertexPositionColor> sun_vertices;
 		vector<unsigned int> sun_vertexIndices;
 		uint32	sun_indexCount;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_sunVertexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_sunIndexBuffer;
-
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		asteroidTex;
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		sunTex;
+
+		//skybox verts, indices, and buffers
+		vector<VertexPositionColor> skybox_vertices;
+		vector<unsigned int> skybox_vertexIndices;
+		uint32	skybox_indexCount;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_skyboxVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_skyboxIndexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		skyboxTex;
+
+		//geometry vert data
+		vector<VertexPositionColor> geometry_vertices;
+		uint32 geometry_indexCount;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_geomitryVertexBuffer;
 
 		
 	};

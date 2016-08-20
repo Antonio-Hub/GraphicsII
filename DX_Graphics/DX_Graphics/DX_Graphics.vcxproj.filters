@@ -112,5 +112,21 @@
     <None Include="asteroiddonut.obj" />
     <None Include="meteorlong.obj" />
     <None Include="sphere.obj" />
+    <None Include="cube.obj" />
+    <None Include="plane.obj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Content\InstancingVertexShader.hlsl">
+      <Filter>Content</Filter>
+    </FxCompile>
+    <FxCompile Include="GeometryShader.hlsl">
+      <Filter>Content</Filter>
+    </FxCompile>
+    <FxCompile Include="VertextoGeometryShader.hlsl">
+      <Filter>Content</Filter>
+    </FxCompile>
+    <FxCompile Include="skyboxPixelShader.hlsl">
+      <Filter>Content</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

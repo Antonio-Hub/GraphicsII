@@ -1,5 +1,5 @@
-
 texture2D asteroid : register(t0);
+//texture cube
 SamplerState filter : register (s0);
 cbuffer LightData : register(b0)
 {
@@ -23,6 +23,7 @@ struct PixelShaderInput
 // A pass-through function for the (interpolated) color data.
 float4 main(PixelShaderInput input) : SV_TARGET
 {
+	//pass the .xyz to sample for skybox to access the texture cube
 	float4 t = asteroid.Sample(filter, input.uv);
 	//color//
 	float4 c = float4(normalize(input.normal.xyz), 1.0f);
@@ -51,8 +52,6 @@ float4 main(PixelShaderInput input) : SV_TARGET
 	c.xyz += LightRatio * float3(0.5f, 0.5f, 0.5f);
 	//spot light
 	c.xyz += s_lightRadiusAttenuation * s_lightDistanceAttenuation * /*s_spotFactor **/ s_lightRatio * float3(0.9f, 0.0f, 0.0f);
-
 	c = saturate(c);
-
 	return t * c;
 }
