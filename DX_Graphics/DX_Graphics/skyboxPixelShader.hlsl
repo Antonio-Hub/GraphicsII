@@ -1,14 +1,5 @@
 textureCUBE asteroid : register(t0);
-//texture cube
 SamplerState filter : register (s0);
-cbuffer LightData : register(b0)
-{
-	float4 light_pos;
-	float4 light_dir;
-	float4 light_ambient;
-	float4 spot_light_pos;
-	float4 spot_light_dir;
-};
 
 // Per-pixel color data passed through the pixel shader.
 struct PixelShaderInput
@@ -24,6 +15,10 @@ struct PixelShaderInput
 float4 main(PixelShaderInput input) : SV_TARGET
 {
 	//pass the .xyz to sample for skybox to access the texture cube
-	float4 t = asteroid.Sample(filter, input.l_pos);
-	return t;
+	float4 c = asteroid.Sample(filter, input.l_pos);
+	float d;
+	d = c.x + c.y + c.z;
+	d /= 3;
+	float4 e = float4(d, d, d, 1.0f);
+	return e;
 }

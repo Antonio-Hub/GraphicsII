@@ -109,7 +109,7 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 		fovAngleY,
 		aspectRatio,
 		0.01f,
-		100.0f
+		1000000.0f
 	);
 
 	XMFLOAT4X4 orientation = m_deviceResources->GetOrientationTransform3D();
@@ -207,11 +207,6 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 
 	XMStoreFloat4x4(&camera, newcamera);
 	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixInverse(0, newcamera)));
-	w_skybox._41 = m_camera.view._41;
-	w_skybox._42 = m_camera.view._42;
-	w_skybox._43 = m_camera.view._43;
-	w_skybox._44 = m_camera.view._44;
-
 	//move spotloght with camera
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_pos, XMLoadFloat4(&XMFLOAT4(newcamera.r[3].m128_f32[0], newcamera.r[3].m128_f32[1], newcamera.r[3].m128_f32[2], newcamera.r[3].m128_f32[3])));
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_dir, XMLoadFloat4(&XMFLOAT4(newcamera.r[2].m128_f32[0], newcamera.r[2].m128_f32[1], newcamera.r[2].m128_f32[2], newcamera.r[2].m128_f32[3])));
@@ -256,6 +251,7 @@ void Sample3DSceneRenderer::Render()
 	UINT stride = sizeof(VertexPositionColor);
 	UINT offset = 0;
 	// Prepare the constant buffer to send it to the graphics device.
+
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
 		0,
@@ -265,21 +261,11 @@ void Sample3DSceneRenderer::Render()
 		0,
 		0
 	);
-	model.position = w_skybox;
 	context->UpdateSubresource1(
 		m_modelConstBuffer.Get(),
 		0,
 		NULL,
 		&model,
-		0,
-		0,
-		0
-	);
-	context->UpdateSubresource1(
-		m_lightConstantBuffer.Get(),
-		0,
-		NULL,
-		&m_constantlightbufferdata,
 		0,
 		0,
 		0

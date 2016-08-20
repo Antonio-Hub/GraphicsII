@@ -112,8 +112,8 @@
     <None Include="asteroiddonut.obj" />
     <None Include="meteorlong.obj" />
     <None Include="sphere.obj" />
-    <None Include="cube.obj" />
     <None Include="plane.obj" />
+    <None Include="cube.obj" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Content\InstancingVertexShader.hlsl">
