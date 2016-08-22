@@ -32,6 +32,10 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	////Load skybox cube model
 	obj.loadOBJ("cube.obj", skybox_vertices, skybox_vertexIndices);
 	skybox_indexCount = skybox_vertexIndices.size();
+	////Load ship model
+	obj.loadOBJ("talon.obj", ship_vertices, ship_vertexIndices);
+	ship_indexCount = ship_vertexIndices.size();
+
 	//number of geomitry to create
 	geometry_indexCount = 1;
 
@@ -121,18 +125,19 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	);
 
 	// Eye is at (0,0.7,1.5), looking at point (0,-0.1,0) with the up-vector along the y-axis.
-	//static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
-	//static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
-	//static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
+	//const XMVECTORF32 eye = { 0.0f, 0.0f, -2.5f, 0.0f };
+	//const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
+	//const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
 	//XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
 	//XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixLookAtLH(eye, at, up)));
 
 	XMStoreFloat4x4(&w_asteroid, XMMatrixTranspose(XMMatrixIdentity()));
 	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_skybox, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(XMMatrixIdentity()));
+
 	for (size_t i = 0; i < 5; i++)
 		XMStoreFloat4x4(&(w_instancedmodel[i]), XMMatrixTranspose(XMMatrixIdentity()));
-	//skybox init
-	XMStoreFloat4x4(&w_skybox, XMMatrixTranspose(XMMatrixIdentity()));
 }
 
 // Called once per frame, rotates the cube and calculates the model and view matrices.
@@ -148,25 +153,30 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 		Rotate(radians);
 	}
 	XMMATRIX newcamera = XMLoadFloat4x4(&camera);
+	XMMATRIX newship = XMLoadFloat4x4(&w_ship);
 
 	if (buttons['W'])
 	{
 		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * +timer.GetElapsedSeconds() * 5.0;
+		newship.r[3] = newship.r[3] + newship.r[2] * +timer.GetElapsedSeconds() * 5.0;
 	}
 
 	if (buttons['A'])
 	{
 		newcamera.r[3] = newcamera.r[3] + newcamera.r[0] * -timer.GetElapsedSeconds() *5.0;
+		newship.r[3] = newship.r[3] + newship.r[0] * -timer.GetElapsedSeconds() *5.0;
 	}
 
 	if (buttons['S'])
 	{
 		newcamera.r[3] = newcamera.r[3] + newcamera.r[2] * -timer.GetElapsedSeconds() * 5.0;
+		newship.r[3] = newship.r[3] + newship.r[2] * -timer.GetElapsedSeconds() * 5.0;
 	}
 
 	if (buttons['D'])
 	{
 		newcamera.r[3] = newcamera.r[3] + newcamera.r[0] * timer.GetElapsedSeconds() * 5.0;
+		newship.r[3] = newship.r[3] + newship.r[0] * timer.GetElapsedSeconds() * 5.0;
 	}
 	if (buttons['J'])
 	{
@@ -204,9 +214,12 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 			newcamera.r[3] = pos;
 		}
 	}
-
+	//store camera matrix data
 	XMStoreFloat4x4(&camera, newcamera);
 	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixInverse(0, newcamera)));
+	//store ship matrix data
+	//XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newship));
+
 	//move spotloght with camera
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_pos, XMLoadFloat4(&XMFLOAT4(newcamera.r[3].m128_f32[0], newcamera.r[3].m128_f32[1], newcamera.r[3].m128_f32[2], newcamera.r[3].m128_f32[3])));
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_dir, XMLoadFloat4(&XMFLOAT4(newcamera.r[2].m128_f32[0], newcamera.r[2].m128_f32[1], newcamera.r[2].m128_f32[2], newcamera.r[2].m128_f32[3])));
@@ -260,7 +273,8 @@ void Sample3DSceneRenderer::Render()
 		0,
 		0,
 		0
-	);
+	); 
+	model.position = w_skybox;
 	context->UpdateSubresource1(
 		m_modelConstBuffer.Get(),
 		0,
@@ -336,8 +350,101 @@ void Sample3DSceneRenderer::Render()
 	);
 	m_deviceResources->GetD3DDeviceContext()->RSSetState(front_raster_state);
 	context->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+//////////////////ship//render////////////////////////////////////////////////
+// Prepare the constant buffer to send it to the graphics device.
+	context->UpdateSubresource1(
+		m_cameraConstBuffer.Get(),
+		0,
+		NULL,
+		&m_camera,
+		0,
+		0,
+		0
+	);
+	model.position = w_ship;
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->UpdateSubresource1(
+		m_lightConstantBuffer.Get(),
+		0,
+		NULL,
+		&m_constantlightbufferdata,
+		0,
+		0,
+		0
+	);
 
-///////////////rfender//asteroid////////////////////////////////////////////////
+	//asteroid model
+	context->IASetVertexBuffers(
+		0,
+		1,
+		m_shipVertexBuffer.GetAddressOf(),
+		&stride,
+		&offset
+	);
+	context->IASetIndexBuffer(
+		m_shipIndexBuffer.Get(),
+		DXGI_FORMAT_R32_UINT,
+		0
+	);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	context->IASetInputLayout(m_inputLayout.Get());
+
+	// Attach our vertex shader.
+	context->VSSetShader(
+		m_vertexShader.Get(),
+		nullptr,
+		0
+	);
+
+	// Attach our pixel shader.
+	context->PSSetShader(
+		m_pixelShader.Get(),
+		nullptr,
+		0
+	);
+
+	// Send the constant buffer to the graphics device.
+	context->VSSetConstantBuffers1(
+		0,
+		1,
+		m_cameraConstBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+
+	context->VSSetConstantBuffers1(
+		1,
+		1,
+		m_modelConstBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+	//send constant buffer to gpu
+	context->PSSetConstantBuffers1(
+		0,
+		1,
+		m_lightConstantBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+	//texture set to PS
+	context->PSSetShaderResources(0, 1, shipTex.GetAddressOf());
+	// Draw the asteroid.
+	context->DrawIndexed(
+		ship_indexCount,
+		0,
+		0
+	);
+///////////////render//asteroid////////////////////////////////////////////////
 	// Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
@@ -630,6 +737,7 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	HRESULT dbug = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"rock.dds", NULL, &asteroidTex);
 	HRESULT dbug1 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"sunmap.dds", NULL, &sunTex);
 	HRESULT dbug2 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"OutputCube.dds", NULL, &skyboxTex);
+	HRESULT dbug3 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"talon.dds", NULL, &shipTex);
 
 
 	auto createskyboxPSTask = loadskyboxPSTask.then([this](const std::vector<byte>& fileData) {
@@ -763,6 +871,32 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 
 	// Once both shaders are loaded, create the mesh.
 	auto createCubeTask = (createPSTask && createVSTask && createInstancingVSTask && createVStoGSTask && createInstancingVSTask && createskyboxPSTask).then([this]() {
+
+		//set buffer for the ship verts and index
+		D3D11_SUBRESOURCE_DATA vertexBufferData_ship = { 0 };
+		vertexBufferData_ship.pSysMem = ship_vertices.data();
+		vertexBufferData_ship.SysMemPitch = 0;
+		vertexBufferData_ship.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC vertexBufferDesc_ship(sizeof(VertexPositionColor)*ship_indexCount, D3D11_BIND_VERTEX_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&vertexBufferDesc_ship,
+				&vertexBufferData_ship,
+				&m_shipVertexBuffer
+			)
+		);
+		D3D11_SUBRESOURCE_DATA indexBufferData_ship = { 0 };
+		indexBufferData_ship.pSysMem = ship_vertexIndices.data();;
+		indexBufferData_ship.SysMemPitch = 0;
+		indexBufferData_ship.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC indexBufferDesc_ship(sizeof(unsigned int) * ship_indexCount, D3D11_BIND_INDEX_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&indexBufferDesc_ship,
+				&indexBufferData_ship,
+				&m_shipIndexBuffer
+			)
+		);
 
 		//set buffer for the asteroid verts and index
 		D3D11_SUBRESOURCE_DATA vertexBufferData_asteroid = { 0 };

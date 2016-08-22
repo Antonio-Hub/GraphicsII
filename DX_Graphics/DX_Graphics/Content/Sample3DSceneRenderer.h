@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "..\Common\DeviceResources.h"
 #include "ShaderStructures.h"
@@ -66,8 +66,16 @@ namespace DX_Graphics
 		float	m_degreesPerSecond;
 		bool	m_tracking;
 
-		XMFLOAT4X4 world, camera, proj, w_asteroid, w_sun, w_instancedmodel[5], w_skybox;
+		XMFLOAT4X4 world, camera, proj, w_asteroid, w_sun, w_instancedmodel[5], w_skybox, w_ship;
 		ObjLoader obj;
+
+		//ship Vertices, Indices, and buffers 
+		vector<VertexPositionColor> ship_vertices;
+		vector<unsigned int> ship_vertexIndices;
+		uint32	ship_indexCount;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_shipVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_shipIndexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		shipTex;
 
 		//asteroid Vertices, Indices, and buffers 
 		vector<VertexPositionColor> asteroid_vertices;
@@ -102,3 +110,4 @@ namespace DX_Graphics
 	};
 }
 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 

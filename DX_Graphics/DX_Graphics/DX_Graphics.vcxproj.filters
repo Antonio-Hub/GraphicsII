@@ -81,19 +81,21 @@
     <Image Include="Assets\StoreLogo.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="rock.dds" />
-    <Image Include="OutputCube.dds" />
-    <Image Include="..\..\..\Graphics 2\Graphics II Project Assets\3D\Environment\Planet06\planet06.jpg">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="sunmap.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="marsmap1k.png">
+    <Image Include="sunmap.dds">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="marsmap1k.dds" />
-    <Image Include="sunmap.dds" />
+    <Image Include="rock.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="OutputCube.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="talon.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -106,14 +108,24 @@
     <None Include="Assets\pyramid.obj">
       <Filter>Assets</Filter>
     </None>
-    <None Include="pyramid.obj" />
-    <None Include="talon.obj" />
-    <None Include="asteroid.obj" />
-    <None Include="asteroiddonut.obj" />
-    <None Include="meteorlong.obj" />
-    <None Include="sphere.obj" />
-    <None Include="plane.obj" />
-    <None Include="cube.obj" />
+    <None Include="talon.obj">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="sphere.obj">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="asteroid.obj">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="asteroiddonut.obj">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="cube.obj">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="meteorlong.obj">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Content\InstancingVertexShader.hlsl">
