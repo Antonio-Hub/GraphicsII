@@ -28,6 +28,7 @@ namespace DX_Graphics
 		bool IsTracking() { return m_tracking; }
 	private:
 		void Rotate(float radians);
+		void RenderToViewPort(int vp);
 	private:
 		// Cached pointer to device resources.
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
@@ -106,7 +107,14 @@ namespace DX_Graphics
 		uint32 geometry_indexCount;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_geomitryVertexBuffer;
 
-		
+		//viewports
+		D3D11_VIEWPORT viewports[2];
+
+		//render to texture variables
+		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_renderTargetTexture;
+		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetView;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_shaderResourceView;
+
 	};
 }
 

@@ -25,16 +25,16 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 {
 	////Load asteroid model
 	obj.loadOBJ("asteroid.obj", asteroid_vertices, asteroid_vertexIndices);
-	asteroid_indexCount = asteroid_vertexIndices.size();
+	asteroid_indexCount = (unsigned int)asteroid_vertexIndices.size();
 	////Load sun model
 	obj.loadOBJ("sphere.obj", sun_vertices, sun_vertexIndices);
-	sun_indexCount = sun_vertexIndices.size();
+	sun_indexCount = (unsigned int)sun_vertexIndices.size();
 	////Load skybox cube model
 	obj.loadOBJ("cube.obj", skybox_vertices, skybox_vertexIndices);
-	skybox_indexCount = skybox_vertexIndices.size();
+	skybox_indexCount = (unsigned int)skybox_vertexIndices.size();
 	////Load ship model
 	obj.loadOBJ("talon.obj", ship_vertices, ship_vertexIndices);
-	ship_indexCount = ship_vertexIndices.size();
+	ship_indexCount = (unsigned int)ship_vertexIndices.size();
 
 	//number of geomitry to create
 	geometry_indexCount = 1;
@@ -92,6 +92,39 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 {
 	Size outputSize = m_deviceResources->GetOutputSize();
+	D3D11_TEXTURE2D_DESC textureDesc;
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+
+	ZeroMemory(&textureDesc, sizeof(textureDesc));
+
+	//set Viewport[0]
+	viewports[0].Width = outputSize.Width / 2;
+	viewports[0].Height = outputSize.Height / 2;
+	viewports[0].MinDepth = 0.0f;
+	viewports[0].MaxDepth = 1.0f;
+	viewports[0].TopLeftX = 0.0f;
+	viewports[0].TopLeftY = 0.0f;
+	//set Viewport[1]
+	viewports[1].Width = outputSize.Width / 2;
+	viewports[1].Height = outputSize.Height / 2;
+	viewports[1].MinDepth = 0.0f;
+	viewports[1].MaxDepth = 1.0f;
+	viewports[1].TopLeftX = outputSize.Width / 2 - 5;
+	viewports[1].TopLeftY = outputSize.Height / 2 - 5;
+
+	textureDesc.Width = viewports[1].Width;
+	textureDesc.Height = viewports[1].Height;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.MiscFlags = 0;
+	
+
 	float aspectRatio = outputSize.Width / outputSize.Height;
 	float fovAngleY = 70.0f * XM_PI / 180.0f;
 
@@ -135,6 +168,9 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(XMMatrixIdentity()));
 	XMStoreFloat4x4(&w_skybox, XMMatrixTranspose(XMMatrixIdentity()));
 	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(XMMatrixIdentity()));
+	XMMATRIX newpos = XMMatrixIdentity();
+	newpos.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, -0.5f, -5.0f, 1.0f));
+	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newpos));
 
 	for (size_t i = 0; i < 5; i++)
 		XMStoreFloat4x4(&(w_instancedmodel[i]), XMMatrixTranspose(XMMatrixIdentity()));
@@ -212,6 +248,11 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 			newcamera.r[3] = XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1));
 			newcamera = XMMatrixRotationX(diffy*0.01f) * newcamera * XMMatrixRotationY(diffx*0.01f);
 			newcamera.r[3] = pos;
+
+			XMVECTOR pos2 = newship.r[3];
+			newship.r[3] = XMLoadFloat4(&XMFLOAT4(0, 0, 0, 1));
+			newship = XMMatrixRotationX(diffy*0.01f) * newship * XMMatrixRotationY(diffx*0.01f);
+			newship.r[3] = pos2;
 		}
 	}
 	//store camera matrix data
@@ -250,6 +291,12 @@ void Sample3DSceneRenderer::Rotate(float radians)
 // Renders one frame using the vertex and pixel shaders.//comment for instancing within//
 void Sample3DSceneRenderer::Render()
 {
+	RenderToViewPort(0);
+	RenderToViewPort(1);
+}
+
+void Sample3DSceneRenderer::RenderToViewPort(int vp)
+{
 	// Loading is asynchronous. Only draw geometry after it's loaded.
 	if (!m_loadingComplete)
 	{
@@ -263,8 +310,10 @@ void Sample3DSceneRenderer::Render()
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPositionColor);
 	UINT offset = 0;
-	// Prepare the constant buffer to send it to the graphics device.
+	//set viewport
+	context->RSSetViewports(1, &viewports[vp]);
 
+	// Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
 		0,
@@ -720,6 +769,7 @@ void Sample3DSceneRenderer::Render()
 		nullptr,
 		0
 	);
+
 }
 
 void Sample3DSceneRenderer::CreateDeviceDependentResources()
