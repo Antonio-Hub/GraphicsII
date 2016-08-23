@@ -49,8 +49,5 @@ PixelShaderInput main(VertexShaderInput input)
 
 	// Pass the color through without modification.
 	output.uv = input.uv;
-
-
-
 	return output;
 }

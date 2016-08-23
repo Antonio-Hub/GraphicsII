@@ -76,6 +76,10 @@ bool DX_GraphicsMain::Render()
 	auto viewport = m_deviceResources->GetScreenViewport();
 	context->RSSetViewports(1, &viewport);
 
+	/**/
+	m_sceneRenderer->setRenderTarget();
+	/**/
+
 	// Reset render targets to the screen.
 	ID3D11RenderTargetView *const targets[1] = { m_deviceResources->GetBackBufferRenderTargetView() };
 	context->OMSetRenderTargets(1, targets, m_deviceResources->GetDepthStencilView());

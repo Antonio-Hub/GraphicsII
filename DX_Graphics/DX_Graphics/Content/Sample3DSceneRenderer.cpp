@@ -92,6 +92,7 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 {
 	Size outputSize = m_deviceResources->GetOutputSize();
+	auto device = m_deviceResources->GetD3DDevice();
 	D3D11_TEXTURE2D_DESC textureDesc;
 	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
 	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
@@ -123,7 +124,44 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	textureDesc.CPUAccessFlags = 0;
 	textureDesc.MiscFlags = 0;
-	
+	device->CreateTexture2D(&textureDesc, nullptr, m_renderTargetTexture.GetAddressOf());
+
+	renderTargetViewDesc.Format = textureDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	renderTargetViewDesc.Texture2D.MipSlice = 0;
+	device->CreateRenderTargetView(m_renderTargetTexture.Get(), &renderTargetViewDesc, m_renderTargetView.GetAddressOf());
+
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+	device->CreateShaderResourceView(m_renderTargetTexture.Get(), &shaderResourceViewDesc, m_shaderResourceView.GetAddressOf());
+
+	CD3D11_TEXTURE2D_DESC1 depthStencilDesc(
+		DXGI_FORMAT_D24_UNORM_S8_UINT,
+		lround(textureDesc.Width),
+		lround(textureDesc.Height),
+		1, // This depth stencil view has only one texture.
+		1, // Use a single mipmap level.
+		D3D11_BIND_DEPTH_STENCIL
+	);
+
+	DX::ThrowIfFailed(
+		device->CreateTexture2D1(
+			&depthStencilDesc,
+			nullptr,
+			m_depthStencil.GetAddressOf()
+		)
+	);
+
+	CD3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc(D3D11_DSV_DIMENSION_TEXTURE2D);
+	DX::ThrowIfFailed(
+		device->CreateDepthStencilView(
+			m_depthStencil.Get(),
+			&depthStencilViewDesc,
+			m_depthStencilView.GetAddressOf()
+		)
+	);
 
 	float aspectRatio = outputSize.Width / outputSize.Height;
 	float fovAngleY = 70.0f * XM_PI / 180.0f;
@@ -169,7 +207,7 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 	XMStoreFloat4x4(&w_skybox, XMMatrixTranspose(XMMatrixIdentity()));
 	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(XMMatrixIdentity()));
 	XMMATRIX newpos = XMMatrixIdentity();
-	newpos.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, -0.5f, -5.0f, 1.0f));
+	newpos.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, -5.5f, 1.0f));
 	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newpos));
 
 	for (size_t i = 0; i < 5; i++)
@@ -258,8 +296,9 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 	//store camera matrix data
 	XMStoreFloat4x4(&camera, newcamera);
 	XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixInverse(0, newcamera)));
+
 	//store ship matrix data
-	//XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newship));
+	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newcamera));
 
 	//move spotloght with camera
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_pos, XMLoadFloat4(&XMFLOAT4(newcamera.r[3].m128_f32[0], newcamera.r[3].m128_f32[1], newcamera.r[3].m128_f32[2], newcamera.r[3].m128_f32[3])));
@@ -295,6 +334,17 @@ void Sample3DSceneRenderer::Render()
 	RenderToViewPort(1);
 }
 
+void Sample3DSceneRenderer::setRenderTarget()
+{
+	m_deviceResources->GetD3DDeviceContext()->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+	m_deviceResources->GetD3DDeviceContext()->ClearRenderTargetView(m_renderTargetView.Get(), DirectX::Colors::CornflowerBlue);
+	m_deviceResources->GetD3DDeviceContext()->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+
+	Render();
+
+}
+
 void Sample3DSceneRenderer::RenderToViewPort(int vp)
 {
 	// Loading is asynchronous. Only draw geometry after it's loaded.
@@ -304,7 +354,6 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 	}
 
 	auto context = m_deviceResources->GetD3DDeviceContext();
-
 	m_deviceResources->GetD3DDeviceContext()->RSSetState(back_raster_state);
 
 	// Each vertex is one instance of the VertexPositionColor struct.
@@ -312,7 +361,6 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 	UINT offset = 0;
 	//set viewport
 	context->RSSetViewports(1, &viewports[vp]);
-
 	// Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
@@ -410,6 +458,9 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		0,
 		0
 	);
+
+
+	//w_ship = camera;
 	model.position = w_ship;
 	context->UpdateSubresource1(
 		m_modelConstBuffer.Get(),
@@ -758,7 +809,7 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr
 	);
 	//texture set to PS
-	context->PSSetShaderResources(0, 1, asteroidTex.GetAddressOf());
+	context->PSSetShaderResources(0, 1, m_shaderResourceView.GetAddressOf());
 	// Draw the asteroid.
 	context->Draw(
 		geometry_indexCount,

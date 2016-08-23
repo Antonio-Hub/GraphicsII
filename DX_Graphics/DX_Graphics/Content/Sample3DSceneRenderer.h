@@ -26,6 +26,7 @@ namespace DX_Graphics
 		void TrackingUpdate(float positionX);
 		void StopTracking();
 		bool IsTracking() { return m_tracking; }
+		void setRenderTarget();
 	private:
 		void Rotate(float radians);
 		void RenderToViewPort(int vp);
@@ -114,6 +115,8 @@ namespace DX_Graphics
 		Microsoft::WRL::ComPtr<ID3D11Texture2D> m_renderTargetTexture;
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_renderTargetView;
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_shaderResourceView;
+		Microsoft::WRL::ComPtr<ID3D11Texture2D1> m_depthStencil;
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> m_depthStencilView;
 
 	};
 }
