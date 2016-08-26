@@ -47,9 +47,6 @@
     <Image Include="Assets\LockScreenLogo.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
-    <Image Include="Assets\SplashScreen.scale-200.png">
-      <Filter>Assets</Filter>
-    </Image>
     <Image Include="Assets\Square150x150Logo.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
@@ -94,6 +91,39 @@
       <Filter>Assets</Filter>
     </Image>
     <Image Include="talon.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="earthmap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="jupitermap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="marsmap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="mercurymap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="moonmap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="neptunemap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="plutomap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="saturnmap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="uranusmap.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="venusmap.dds">
       <Filter>Assets</Filter>
     </Image>
   </ItemGroup>

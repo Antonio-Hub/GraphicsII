@@ -26,9 +26,9 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	////Load asteroid model
 	obj.loadOBJ("asteroid.obj", asteroid_vertices, asteroid_vertexIndices);
 	asteroid_indexCount = (unsigned int)asteroid_vertexIndices.size();
-	////Load sun model
-	obj.loadOBJ("sphere.obj", sun_vertices, sun_vertexIndices);
-	sun_indexCount = (unsigned int)sun_vertexIndices.size();
+	////Load planet model
+	obj.loadOBJ("sphere.obj", planet_vertices, planet_vertexIndices);
+	planet_indexCount = (unsigned int)planet_vertexIndices.size();
 	////Load skybox cube model
 	obj.loadOBJ("cube.obj", skybox_vertices, skybox_vertexIndices);
 	skybox_indexCount = (unsigned int)skybox_vertexIndices.size();
@@ -85,7 +85,29 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	XMStoreFloat4(&m_constantlightbufferdata.light_ambient, XMLoadFloat4(&XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)));
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_pos, XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
 	XMStoreFloat4(&m_constantlightbufferdata.spot_light_dir, XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f)));
+	
+	//world transforms
+	XMStoreFloat4x4(&w_asteroid, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_mercury, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_venus, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_earth, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_moon, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_mars, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_jupiter, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_saturn, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_uranus, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_neptune, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_pluto, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_skybox, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(XMMatrixIdentity()));
+	XMStoreFloat4x4(&w_geomitry, XMMatrixTranspose(XMMatrixIdentity()));
+	XMMATRIX newpos = XMMatrixIdentity();
+	newpos.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, -5.5f, 1.0f));
+	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newpos));
 
+	for (size_t i = 0; i < 5; i++)
+		XMStoreFloat4x4(&(w_instancedmodel[i]), XMMatrixTranspose(XMMatrixIdentity()));
 }
 
 // Initializes view parameters when the window size changes.
@@ -194,24 +216,6 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 		&m_camera.projection,
 		XMMatrixTranspose(perspectiveMatrix * orientationMatrix)
 	);
-
-	// Eye is at (0,0.7,1.5), looking at point (0,-0.1,0) with the up-vector along the y-axis.
-	//const XMVECTORF32 eye = { 0.0f, 0.0f, -2.5f, 0.0f };
-	//const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
-	//const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
-	//XMStoreFloat4x4(&camera, XMMatrixLookAtLH(eye, at, up));
-	//XMStoreFloat4x4(&m_camera.view, XMMatrixTranspose(XMMatrixLookAtLH(eye, at, up)));
-
-	XMStoreFloat4x4(&w_asteroid, XMMatrixTranspose(XMMatrixIdentity()));
-	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(XMMatrixIdentity()));
-	XMStoreFloat4x4(&w_skybox, XMMatrixTranspose(XMMatrixIdentity()));
-	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(XMMatrixIdentity()));
-	XMMATRIX newpos = XMMatrixIdentity();
-	newpos.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, -5.5f, 1.0f));
-	XMStoreFloat4x4(&w_ship, XMMatrixTranspose(newpos));
-
-	for (size_t i = 0; i < 5; i++)
-		XMStoreFloat4x4(&(w_instancedmodel[i]), XMMatrixTranspose(XMMatrixIdentity()));
 }
 
 // Called once per frame, rotates the cube and calculates the model and view matrices.
@@ -312,10 +316,45 @@ void Sample3DSceneRenderer::Rotate(float radians)
 {
 	XMMATRIX orbit = XMMatrixIdentity();
 	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(2.0f, 0.0f, 0.0f, 1.0f));
-	orbit = XMMatrixRotationY(radians) * orbit;
-	orbit = orbit * XMMatrixRotationY(radians);
+	//orbit = XMMatrixRotationY(radians) * orbit;
+	//orbit = orbit * XMMatrixRotationY(radians);
+
 	// Prepare to pass the updated model matrix to the shader
 	XMStoreFloat4x4(&w_asteroid, XMMatrixTranspose(orbit));
+	//sun
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(orbit));
+	//mercury
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(5.79f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_mercury, XMMatrixTranspose(orbit));
+	//venus
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(10.82f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_venus, XMMatrixTranspose(orbit));
+	//earth
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(14.96f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_earth, XMMatrixTranspose(orbit));
+	//moon
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(15.0f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_moon, XMMatrixTranspose(orbit));
+	//mars
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(22.79f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_mars, XMMatrixTranspose(orbit));
+	//jupiter
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(77.83f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_jupiter, XMMatrixTranspose(orbit));
+	//saturn
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(142.7f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_saturn, XMMatrixTranspose(orbit));
+	//uranus
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(287.1f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_uranus, XMMatrixTranspose(orbit));
+	//neptune
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(449.71f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_neptune, XMMatrixTranspose(orbit));
+	//pluto
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(591.3f, 0.0f, 0.0f, 1.0f));
+	XMStoreFloat4x4(&w_pluto, XMMatrixTranspose(orbit));
+
 	//instanced matrix data
 	for (size_t i = 0; i < 5; i++)
 	{
@@ -354,13 +393,15 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 	}
 
 	auto context = m_deviceResources->GetD3DDeviceContext();
-	m_deviceResources->GetD3DDeviceContext()->RSSetState(back_raster_state);
+	context->RSSetViewports(1, &viewports[vp]);
 
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPositionColor);
 	UINT offset = 0;
+#pragma region skybox
+	/*
+	m_deviceResources->GetD3DDeviceContext()->RSSetState(back_raster_state.Get());
 	//set viewport
-	context->RSSetViewports(1, &viewports[vp]);
 	// Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
@@ -445,9 +486,12 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		0,
 		0
 	);
-	m_deviceResources->GetD3DDeviceContext()->RSSetState(front_raster_state);
+	m_deviceResources->GetD3DDeviceContext()->RSSetState(front_raster_state.Get());
 	context->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D11_CLEAR_DEPTH, 1.0f, 0);
-//////////////////ship//render////////////////////////////////////////////////
+	*/
+#pragma endregion
+
+#pragma region ship
 // Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
@@ -537,16 +581,16 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr
 	);
 	//texture set to PS
-	context->PSSetShaderResources(0, 1, shipTex.GetAddressOf());
+	context->PSSetShaderResources(1, 1, shipTex.GetAddressOf());
 	// Draw the asteroid.
 	context->DrawIndexed(
 		ship_indexCount,
 		0,
 		0
 	);
-///////////////render//asteroid////////////////////////////////////////////////
-	// Prepare the constant buffer to send it to the graphics device.
-	context->UpdateSubresource1(
+#pragma endregion
+
+	/*context->UpdateSubresource1(
 		m_cameraConstBuffer.Get(),
 		0,
 		NULL,
@@ -631,18 +675,17 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr
 	);
 	//texture set to PS
-	context->PSSetShaderResources(0, 1, asteroidTex.GetAddressOf());
-	// Draw the asteroid.
+	context->PSSetShaderResources(1, 1, asteroidTex.GetAddressOf());
+	// Draw
 	context->DrawIndexed(
 		asteroid_indexCount,
 		0,
 		0
 	);
-//////////////////////////////////////////////////////////////////////////////////////////	
-	//change buffer matrix to be the suns location
-	//XMStoreFloat4x4(&model.position, XMMatrixIdentity());
+	*/
+
+#pragma region planets
 	model.position = w_sun;
-	//put the location in vram of gpu 
 	context->UpdateSubresource1(
 		m_modelConstBuffer.Get(),
 		0,
@@ -653,17 +696,17 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		0
 	);
 
-	//sun model
+	//planet model
 	context->IASetVertexBuffers(
 		0,
 		1,
-		m_sunVertexBuffer.GetAddressOf(),
+		m_planetVertexBuffer.GetAddressOf(),
 		&stride,
 		&offset
 	);
 
 	context->IASetIndexBuffer(
-		m_sunIndexBuffer.Get(),
+		m_planetIndexBuffer.Get(),
 		DXGI_FORMAT_R32_UINT,
 		0
 	);
@@ -707,15 +750,188 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr,
 		nullptr
 	);
-	context->PSSetShaderResources(0, 1, sunTex.GetAddressOf());
+	context->PSSetShaderResources(1, 1, sunTex.GetAddressOf());
 
 	// Draw the objects.
 	context->DrawIndexed(
-		sun_indexCount,
+		planet_indexCount,
 		0,
 		0
 	);
-///////indexed//drawing///////////////////////////////////
+	model.position = w_mercury;
+	context->PSSetShaderResources(1, 1, mercuryTex.GetAddressOf());
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_venus;
+	context->PSSetShaderResources(1, 1, venusTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_earth;
+	context->PSSetShaderResources(1, 1, earthTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_moon;
+	context->PSSetShaderResources(1, 1, moonTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_mars;
+	context->PSSetShaderResources(1, 1, marsTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_jupiter;
+	context->PSSetShaderResources(1, 1, jupiterTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_saturn;
+	context->PSSetShaderResources(1, 1, saturnTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_uranus;
+	context->PSSetShaderResources(1, 1, uranusTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_neptune;
+	context->PSSetShaderResources(1, 1, neptuneTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+	model.position = w_pluto;
+	context->PSSetShaderResources(1, 1, plutoTex.GetAddressOf());
+
+	context->UpdateSubresource1(
+		m_modelConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
+	context->DrawIndexed(
+		planet_indexCount,
+		0,
+		0
+	);
+
+#pragma endregion
+
+#pragma region indexed render
+/*
 	for (size_t i = 0; i < 5; i++)
 		instancemodels.position[i] = w_instancedmodel[i];
 
@@ -750,9 +966,22 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr,
 		nullptr
 	);
-	context->DrawIndexedInstanced(sun_indexCount, 5, 0, 0, 0);
-///////Geomitry//drawing///////////////////////////////////////////
+	context->DrawIndexedInstanced(planet_indexCount, 5, 0, 0, 0);
+*/
+#pragma endregion
 
+#pragma region geomitry render
+	/*
+	model.position = w_geomitry;
+	context->UpdateSubresource1(
+		m_geomitryConstBuffer.Get(),
+		0,
+		NULL,
+		&model,
+		0,
+		0,
+		0
+	);
 	context->IASetVertexBuffers(
 		0,
 		1,
@@ -809,7 +1038,7 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr
 	);
 	//texture set to PS
-	context->PSSetShaderResources(0, 1, m_shaderResourceView.GetAddressOf());
+	context->PSSetShaderResources(1, 1, m_shaderResourceView.GetAddressOf());
 	// Draw the asteroid.
 	context->Draw(
 		geometry_indexCount,
@@ -820,7 +1049,8 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 		nullptr,
 		0
 	);
-
+	*/
+#pragma endregion
 }
 
 void Sample3DSceneRenderer::CreateDeviceDependentResources()
@@ -837,6 +1067,17 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 	
 	HRESULT dbug = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"rock.dds", NULL, &asteroidTex);
 	HRESULT dbug1 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"sunmap.dds", NULL, &sunTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"mercurymap.dds", NULL, &mercuryTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"venusmap.dds", NULL, &venusTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"earthmap.dds", NULL, &earthTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"moonmap.dds", NULL, &moonTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"marsmap.dds", NULL, &marsTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"jupitermap.dds", NULL, &jupiterTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"saturnmap.dds", NULL, &saturnTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"uranusmap.dds", NULL, &uranusTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"neptunemap.dds", NULL, &neptuneTex);
+	CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"plutomap.dds", NULL, &plutoTex);
+
 	HRESULT dbug2 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"OutputCube.dds", NULL, &skyboxTex);
 	HRESULT dbug3 = CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"talon.dds", NULL, &shipTex);
 
@@ -1024,29 +1265,29 @@ void Sample3DSceneRenderer::CreateDeviceDependentResources()
 				&m_asteroidIndexBuffer
 			)
 		);
-		//set buffer for the sun verts and index
-		D3D11_SUBRESOURCE_DATA vertexBufferData_sun = { 0 };
-		vertexBufferData_sun.pSysMem = sun_vertices.data();
-		vertexBufferData_sun.SysMemPitch = 0;
-		vertexBufferData_sun.SysMemSlicePitch = 0;
-		CD3D11_BUFFER_DESC vertexBufferDesc_sun(sizeof(VertexPositionColor)*sun_indexCount, D3D11_BIND_VERTEX_BUFFER);
+		//set buffer for the planet verts and index
+		D3D11_SUBRESOURCE_DATA vertexBufferData_planet = { 0 };
+		vertexBufferData_planet.pSysMem = planet_vertices.data();
+		vertexBufferData_planet.SysMemPitch = 0;
+		vertexBufferData_planet.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC vertexBufferDesc_planet(sizeof(VertexPositionColor)*planet_indexCount, D3D11_BIND_VERTEX_BUFFER);
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateBuffer(
-				&vertexBufferDesc_sun,
-				&vertexBufferData_sun,
-				&m_sunVertexBuffer
+				&vertexBufferDesc_planet,
+				&vertexBufferData_planet,
+				&m_planetVertexBuffer
 			)
 		);
-		D3D11_SUBRESOURCE_DATA indexBufferData_sun = { 0 };
-		indexBufferData_sun.pSysMem = sun_vertexIndices.data();
-		indexBufferData_sun.SysMemPitch = 0;
-		indexBufferData_sun.SysMemSlicePitch = 0;
-		CD3D11_BUFFER_DESC indexBufferDesc_sun(sizeof(unsigned int) * sun_indexCount, D3D11_BIND_INDEX_BUFFER);
+		D3D11_SUBRESOURCE_DATA indexBufferData_planet = { 0 };
+		indexBufferData_planet.pSysMem = planet_vertexIndices.data();
+		indexBufferData_planet.SysMemPitch = 0;
+		indexBufferData_planet.SysMemSlicePitch = 0;
+		CD3D11_BUFFER_DESC indexBufferDesc_planet(sizeof(unsigned int) * planet_indexCount, D3D11_BIND_INDEX_BUFFER);
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateBuffer(
-				&indexBufferDesc_sun,
-				&indexBufferData_sun,
-				&m_sunIndexBuffer
+				&indexBufferDesc_planet,
+				&indexBufferData_planet,
+				&m_planetIndexBuffer
 			)
 		);
 		D3D11_SUBRESOURCE_DATA vertexBufferData_skybox = { 0 };
@@ -1127,8 +1368,8 @@ void Sample3DSceneRenderer::ReleaseDeviceDependentResources()
 	m_cameraConstBuffer.Reset();
 	m_asteroidVertexBuffer.Reset();
 	m_asteroidIndexBuffer.Reset();
-	m_sunVertexBuffer.Reset();
-	m_sunIndexBuffer.Reset();
-	delete back_raster_state;
-	delete front_raster_state;
+	m_planetVertexBuffer.Reset();
+	m_planetIndexBuffer.Reset();
+	back_raster_state.Reset();
+	front_raster_state.Reset();
 }

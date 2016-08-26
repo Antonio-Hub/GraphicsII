@@ -37,8 +37,8 @@ namespace DX_Graphics
 		// Direct3D resources for cube geometry.
 		Microsoft::WRL::ComPtr<ID3D11InputLayout>	m_inputLayout;
 		//raster state
-		ID3D11RasterizerState * back_raster_state;
-		ID3D11RasterizerState * front_raster_state;
+		Microsoft::WRL::ComPtr<ID3D11RasterizerState> back_raster_state;
+		Microsoft::WRL::ComPtr<ID3D11RasterizerState> front_raster_state;
 
 		//shaders
 		Microsoft::WRL::ComPtr<ID3D11GeometryShader>m_geometryShader;
@@ -68,7 +68,8 @@ namespace DX_Graphics
 		float	m_degreesPerSecond;
 		bool	m_tracking;
 
-		XMFLOAT4X4 world, camera, proj, w_asteroid, w_sun, w_instancedmodel[5], w_skybox, w_ship;
+		XMFLOAT4X4 camera, proj, w_asteroid, w_instancedmodel[5], w_skybox, w_ship, w_geomitry;
+		XMFLOAT4X4 w_sun, w_mercury, w_venus, w_earth, w_moon, w_mars, w_jupiter, w_saturn, w_uranus, w_neptune, w_pluto;
 		ObjLoader obj;
 
 		//ship Vertices, Indices, and buffers 
@@ -87,13 +88,24 @@ namespace DX_Graphics
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_asteroidIndexBuffer;
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		asteroidTex;
 
-		//sun Vertices, Indices, and buffers 
-		vector<VertexPositionColor> sun_vertices;
-		vector<unsigned int> sun_vertexIndices;
-		uint32	sun_indexCount;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_sunVertexBuffer;
-		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_sunIndexBuffer;
+		//planet Vertices, Indices, and buffers 
+		vector<VertexPositionColor> planet_vertices;
+		vector<unsigned int> planet_vertexIndices;
+		uint32	planet_indexCount;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_planetVertexBuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_planetIndexBuffer;
+		//planet textures
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		sunTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		mercuryTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		venusTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		earthTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		moonTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		marsTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		jupiterTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		saturnTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		uranusTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		neptuneTex;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>		plutoTex;
 
 		//skybox verts, indices, and buffers
 		vector<VertexPositionColor> skybox_vertices;

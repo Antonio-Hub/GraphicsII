@@ -35,7 +35,7 @@ PixelShaderInput main(VertexShaderInput input)
 	//add w to position and normal
 	float4 pos = float4(input.pos, 1.0f);
 	float4 nor = float4(normalize(input.normal), 0.0f);
-
+	//pos = normalize(pos);
 	// Transform the vertex position into projected space.
 	pos = mul(pos, position);
 	output.l_pos = pos.xyz;

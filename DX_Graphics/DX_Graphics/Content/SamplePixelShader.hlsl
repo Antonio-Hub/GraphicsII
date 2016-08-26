@@ -1,4 +1,5 @@
 texture2D asteroid : register(t0);
+texture2D asteroid1 : register(t1);
 SamplerState filter : register (s0);
 cbuffer LightData : register(b0)
 {
@@ -23,7 +24,7 @@ struct PixelShaderInput
 float4 main(PixelShaderInput input) : SV_TARGET
 {
 	//pass the .xyz to sample for skybox to access the texture cube
-	float4 t = asteroid.Sample(filter, input.uv);
+	float4 t = asteroid1.Sample(filter, input.uv);
 	//color//
 	float4 c = float4(normalize(input.normal.xyz), 1.0f);
 	

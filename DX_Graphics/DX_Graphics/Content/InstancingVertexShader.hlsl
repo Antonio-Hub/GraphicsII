@@ -47,6 +47,5 @@ PixelShaderInput main(VertexShaderInput input)
 	output.uv = input.uv;
 
 
-
 	return output;
 }
