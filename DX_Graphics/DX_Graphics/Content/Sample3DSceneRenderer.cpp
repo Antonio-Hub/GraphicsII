@@ -227,7 +227,6 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 		float radiansPerSecond = XMConvertToRadians(m_degreesPerSecond);
 		double totalRotation = timer.GetTotalSeconds() * radiansPerSecond;
 		float radians = static_cast<float>(fmod(totalRotation, XM_2PI));
-
 		Rotate(radians);
 	}
 	XMMATRIX newcamera = XMLoadFloat4x4(&camera);
@@ -325,34 +324,36 @@ void Sample3DSceneRenderer::Rotate(float radians)
 	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(orbit));
 	//mercury
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(5.79f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(4.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_mercury, XMMatrixTranspose(orbit));
 	//venus
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(10.82f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(8.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_venus, XMMatrixTranspose(orbit));
 	//earth
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(14.96f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(12.0f, 0.0f, 0.0f, 1.0f));
+	orbit = XMMatrixRotationY(radians) * orbit;
+	orbit = orbit * XMMatrixRotationY(radians);
 	XMStoreFloat4x4(&w_earth, XMMatrixTranspose(orbit));
 	//moon
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(15.0f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(16.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_moon, XMMatrixTranspose(orbit));
 	//mars
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(22.79f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(20.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_mars, XMMatrixTranspose(orbit));
 	//jupiter
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(77.83f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(24.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_jupiter, XMMatrixTranspose(orbit));
 	//saturn
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(142.7f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(28.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_saturn, XMMatrixTranspose(orbit));
 	//uranus
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(287.1f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(32.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_uranus, XMMatrixTranspose(orbit));
 	//neptune
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(449.71f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(36.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_neptune, XMMatrixTranspose(orbit));
 	//pluto
-	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(591.3f, 0.0f, 0.0f, 1.0f));
+	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(40.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_pluto, XMMatrixTranspose(orbit));
 
 	//instanced matrix data
@@ -370,7 +371,7 @@ void Sample3DSceneRenderer::Rotate(float radians)
 void Sample3DSceneRenderer::Render()
 {
 	RenderToViewPort(0);
-	RenderToViewPort(1);
+	//RenderToViewPort(1);
 }
 
 void Sample3DSceneRenderer::setRenderTarget()
@@ -393,7 +394,7 @@ void Sample3DSceneRenderer::RenderToViewPort(int vp)
 	}
 
 	auto context = m_deviceResources->GetD3DDeviceContext();
-	context->RSSetViewports(1, &viewports[vp]);
+	//context->RSSetViewports(1, &viewports[vp]);
 
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPositionColor);

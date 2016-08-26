@@ -51,7 +51,7 @@ float4 main(PixelShaderInput input) : SV_TARGET
 	//direction light
 	c.xyz += LightRatio * float3(0.5f, 0.5f, 0.5f);
 	//spot light
-	c.xyz += s_lightRadiusAttenuation * s_lightDistanceAttenuation * /*s_spotFactor **/ s_lightRatio * float3(0.9f, 0.0f, 0.0f);
+	c.xyz += s_lightRadiusAttenuation * s_lightDistanceAttenuation * /*s_spotFactor **/ s_lightRatio * float3(0.9f, 0.9f, 0.9f);
 	c = saturate(c);
 	return t * c;
 }

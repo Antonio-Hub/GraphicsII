@@ -77,7 +77,7 @@ bool DX_GraphicsMain::Render()
 	context->RSSetViewports(1, &viewport);
 
 	/**/
-	m_sceneRenderer->setRenderTarget();
+	//m_sceneRenderer->setRenderTarget();
 	/**/
 
 	// Reset render targets to the screen.
