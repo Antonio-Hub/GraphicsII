@@ -324,6 +324,7 @@ void Sample3DSceneRenderer::Rotate(float radians)
 	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_sun, XMMatrixTranspose(orbit));
 	//mercury
+
 	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(4.0f, 0.0f, 0.0f, 1.0f));
 	XMStoreFloat4x4(&w_mercury, XMMatrixTranspose(orbit));
 	//venus
@@ -331,7 +332,7 @@ void Sample3DSceneRenderer::Rotate(float radians)
 	XMStoreFloat4x4(&w_venus, XMMatrixTranspose(orbit));
 	//earth
 	orbit.r[3] = XMLoadFloat4(&XMFLOAT4(12.0f, 0.0f, 0.0f, 1.0f));
-	orbit = XMMatrixRotationY(radians) * orbit;
+	//orbit = XMMatrixRotationY(radians) * orbit;
 	orbit = orbit * XMMatrixRotationY(radians);
 	XMStoreFloat4x4(&w_earth, XMMatrixTranspose(orbit));
 	//moon
